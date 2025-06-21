@@ -118,16 +118,17 @@ const CustomerManagement = () => {
       setUpdatingId(selectedCustomer._id);
       const token = sessionStorage.getItem('token');
 
-      const response = await axios.patch(
-        `https://lawyerbackend-qrqa.onrender.com/lawapi/common/updateuser/${selectedCustomer.userId}`,
-        editedCustomer,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+    const response = await axios.post(
+  `https://lawyerbackend-qrqa.onrender.com/lawapi/common/updateuser/${selectedCustomer.userId}`,
+  editedCustomer,
+  {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  }
+);
+
 
       if (response.data?.success) {
         toast.success('Customer updated successfully');
