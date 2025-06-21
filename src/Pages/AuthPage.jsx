@@ -233,7 +233,7 @@ const handleLogin = async (e) => {
 
   return (
     <div className="auth-page" style={{
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%);',
       minHeight: '100vh',
       padding: '2rem 0',
       overflow: 'hidden'
@@ -253,7 +253,7 @@ const handleLogin = async (e) => {
                 border: 'none'
               }}>
                 <div className="card-header py-4" style={{
-                  background: 'linear-gradient(to right, #4facfe 0%, #00f2fe 100%)',
+                  background: 'linear-gradient(to right, #283e51, #485563)',
                   color: 'white'
                 }}>
                   <h2 className="text-center mb-0" style={{ fontWeight: '700' }}>
@@ -265,32 +265,33 @@ const handleLogin = async (e) => {
                 <div className="card-body p-5" style={{ backgroundColor: '#f8f9fa' }}>
                   <form onSubmit={handleRegister}>
                     {/* Role Selection */}
-                    <div className="form-group mb-4">
-                      <label className="d-block mb-3 fw-bold">I am registering as:</label>
-                      <div className="d-flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          className={`btn ${userRole === 'user' ? 'btn-primary' : 'btn-outline-primary'} rounded-pill px-4`}
-                          onClick={() => handleRoleChange({ target: { value: 'user' } })}
-                        >
-                          <i className="fas fa-user me-2"></i> Customer
-                        </button>
-                        <button
-                          type="button"
-                          className={`btn ${userRole === 'admin' ? 'btn-danger' : 'btn-outline-danger'} rounded-pill px-4`}
-                          onClick={() => handleRoleChange({ target: { value: 'admin' } })}
-                        >
-                          <i className="fas fa-user-shield me-2"></i> Super Admin
-                        </button>
-                        <button
-                          type="button"
-                          className={`btn ${userRole === 'lawyer' ? 'btn-success' : 'btn-outline-success'} rounded-pill px-4`}
-                          onClick={() => handleRoleChange({ target: { value: 'lawyer' } })}
-                        >
-                          <i className="fas fa-gavel me-2"></i> Lawyer
-                        </button>
-                      </div>
-                    </div>
+                   <div className="form-group mb-4">
+  <label className="d-block mb-3 fw-bold">I am registering as:</label>
+  <div className="d-flex flex-wrap gap-2">
+    <button
+      type="button"
+      className={`btn ${userRole === 'user' ? 'btn-outline-dark' : 'btn-outline-dark'} rounded-pill px-4`}
+      onClick={() => handleRoleChange({ target: { value: 'user' } })}
+    >
+      <i className="fas fa-user me-2"></i> Customer
+    </button>
+    <button
+      type="button"
+      className={`btn ${userRole === 'admin' ? 'btn-outline-dark' : 'btn-outline-dark'} rounded-pill px-4`}
+      onClick={() => handleRoleChange({ target: { value: 'admin' } })}
+    >
+      <i className="fas fa-user-shield me-2"></i> Super Admin
+    </button>
+    <button
+      type="button"
+      className={`btn ${userRole === 'lawyer' ? 'btn-outline-dark' : 'btn-outline-dark'} rounded-pill px-4`}
+      onClick={() => handleRoleChange({ target: { value: 'lawyer' } })}
+    >
+      <i className="fas fa-gavel me-2"></i> Lawyer
+    </button>
+  </div>
+</div>
+
 
                     <div className="row">
                       {/* Common Fields */}
@@ -560,7 +561,7 @@ const handleLogin = async (e) => {
                         className="btn btn-primary btn-lg w-100 py-3 fw-bold"
                         disabled={isSubmitting}
                         style={{
-                          background: 'linear-gradient(to right, #4facfe 0%, #00f2fe 100%)',
+                          background: 'linear-gradient(to right, #283e51, #485563)',
                           border: 'none',
                           borderRadius: '50px'
                         }}
