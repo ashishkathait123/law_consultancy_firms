@@ -4,6 +4,7 @@ import { Routes, Route, useLocation } from "react-router-dom";
 
 import Header from "./Header.jsx";
 import SideBar from "./SideBar.jsx";
+import AuthRoute from "./AuthRoute.jsx";
 import Logout from "./LogOut.jsx";
 import AdminDashboard from "../Pages/Admin/AdminDashboard.jsx";
 import UserDashboard from "../Pages/user/UserDashboard.jsx";
@@ -48,14 +49,15 @@ style={{ background: "#f9f7f1", minHeight: "100vh" }}
         {/* <PageTitle page={pageTitle} /> */}
 
         <Routes>
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/user/dashboard" element={<UserDashboard />} />
-          <Route path="/lawyer/dashboard" element={<Lawyerdashboard />} />
-          <Route path="/admin/lawyerManagement" element={<LawyerManagement />} />
-          <Route path="/admin/customner" element={<CustomerManagement />} />
-          <Route path="/user/profile" element={<ClientProfile />} />
-          <Route path="/user/FindLawyer" element={<FindLawyer />} />
-          <Route path="/user/CaseHistory" element={<CaseHistory />} />
+          
+          <Route path="/admin/dashboard" element={<AuthRoute>  <AdminDashboard /> </AuthRoute>} />
+          <Route path="/user/dashboard" element={<AuthRoute> <UserDashboard /> </AuthRoute>} />
+          <Route path="/lawyer/dashboard" element={<AuthRoute> <Lawyerdashboard /> </AuthRoute>} />
+          <Route path="/admin/lawyerManagement" element={<AuthRoute> <LawyerManagement /> </AuthRoute>} />
+          <Route path="/admin/customner" element={<AuthRoute> <CustomerManagement /> </AuthRoute>} />
+          <Route path="/user/profile" element={<AuthRoute> <ClientProfile /> </AuthRoute>} />
+          <Route path="/user/FindLawyer" element={<AuthRoute> <FindLawyer /> </AuthRoute>} />
+          <Route path="/user/CaseHistory" element={<AuthRoute> <CaseHistory /> </AuthRoute>} />
           <Route path="/logout" element={<Logout />} />
         </Routes>
       </main>
