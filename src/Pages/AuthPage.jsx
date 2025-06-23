@@ -290,13 +290,13 @@ console.log("Logged in user:", response.data.user);
                         >
                           <i className="fas fa-user me-1"></i> Customer
                         </button>
-                        <button
+                        {/* <button
                           type="button"
                           className={`btn ${userRole === 'admin' ? 'btn-dark' : 'btn-outline-dark'} btn-sm rounded-pill px-3`}
                           onClick={() => handleRoleChange({ target: { value: 'admin' } })}
                         >
                           <i className="fas fa-user-shield me-1"></i> Admin
-                        </button>
+                        </button> */}
                         <button
                           type="button"
                           className={`btn ${userRole === 'lawyer' ? 'btn-dark' : 'btn-outline-dark'} btn-sm rounded-pill px-3`}
