@@ -9,6 +9,7 @@ function Header() {
         <header id='header'
             className='header fixed-top d-flex align-items-center'>
             {/* {logo} */}
+      
             <Logo />
             {/* {search bar} */}
             {/* <SearchBar /> */}

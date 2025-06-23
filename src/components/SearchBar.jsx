@@ -1,6 +1,7 @@
 import React from 'react'
 import './searchbar.css';
 
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 
 function SearchBar() {

@@ -1,40 +1,40 @@
+// components/Allmain.jsx
 import React, { useEffect, useState } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 
 import Header from "./Header.jsx";
 import SideBar from "./SideBar.jsx";
-import LawyerManagement from "../Pages/Admin/LawyerManagement.jsx";
-import "./main.css";
+import Logout from "./LogOut.jsx";
 import AdminDashboard from "../Pages/Admin/AdminDashboard.jsx";
-// import PageTitle from "./PageTitle.jsx";
-// import Protected from "../Pages/Protected.jsx";
+import UserDashboard from "../Pages/user/UserDashboard.jsx";
 import Lawyerdashboard from "../Pages/lawyer/LawyerDashbaord.jsx";
- import UserDashboard from "../Pages/user/UserDashboard.jsx";
+import LawyerManagement from "../Pages/Admin/LawyerManagement.jsx";
 import CustomerManagement from "../Pages/Admin/CustomerManagement.jsx";
+import ClientProfile from "../Pages/user/Profile.jsx";
+import FindLawyer from "../Pages/user/FindLawyer.jsx";
+import CaseHistory from "../Pages/user/CaseHistory.jsx";
+import "./main.css";
 
 const Allmain = () => {
   const location = useLocation();
   const [pageTitle, setPageTitle] = useState("");
 
   useEffect(() => {
-    //       // Map routes to page titles
     const routeToTitle = {
-      "/dashboard": "Dashboard",
-      "/franchisedashboard": "Franchise dashboard",
-      
-
-    
-      "/student-dashboard": "Student Dashboard",
-    }
-      
+      "/admin/dashboard": "Admin Dashboard",
+      "/user/dashboard": "User Dashboard",
+      "/lawyer/dashboard": "Lawyer Dashboard",
+      "/admin/lawyerManagement": "Manage Lawyers",
+      "/admin/customner": "Manage Customers",
+      "/user/profile": "Manage profile",
+      "/user/FindLawyer": "Find Lawyer",
+      "/user/CaseHistory": "Case History",
+    };
 
     const title = routeToTitle[location.pathname];
-    if (title) {
-      setPageTitle(title);
-    } else {
-      setPageTitle("");
-    }
+    setPageTitle(title || "");
   }, [location.pathname]);
+
   return (
     <>
       <Header />
@@ -42,16 +42,22 @@ const Allmain = () => {
       <main
         id="main"
         className="main"
-        style={{ background: "#99dee0", height: "auto" }}
+style={{ background: "#f9f7f1", minHeight: "100vh" }}
       >
+        {/* Optional: Page title */}
         {/* <PageTitle page={pageTitle} /> */}
-      <Routes>
-  <Route path="/Admin/admindashboard" element={<AdminDashboard />} />
-  <Route path="/userdashboard" element={<UserDashboard />} />
-  <Route path="/lawyer/dashboard" element={<Lawyerdashboard />} />
-  <Route path="/Admin/lawyerManagement" element={<LawyerManagement />} />
-  <Route path="/Admin/customner" element={<CustomerManagement/>} />
-</Routes>
+
+        <Routes>
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/user/dashboard" element={<UserDashboard />} />
+          <Route path="/lawyer/dashboard" element={<Lawyerdashboard />} />
+          <Route path="/admin/lawyerManagement" element={<LawyerManagement />} />
+          <Route path="/admin/customner" element={<CustomerManagement />} />
+          <Route path="/user/profile" element={<ClientProfile />} />
+          <Route path="/user/FindLawyer" element={<FindLawyer />} />
+          <Route path="/user/CaseHistory" element={<CaseHistory />} />
+          <Route path="/logout" element={<Logout />} />
+        </Routes>
       </main>
     </>
   );

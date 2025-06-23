@@ -8,8 +8,8 @@ const UserDashboard = () => {
 
   return (
     <>
-      <PageTitle page={"Student Dashboard"} />
-   <h1>Student Dashboard</h1>
+      <PageTitle page={"Cutomer Dashboard"} />
+   <h1> Welcome</h1>
     </>
   );
 };

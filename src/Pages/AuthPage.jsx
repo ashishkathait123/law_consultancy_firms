@@ -6,18 +6,19 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './AuthAnimation.css';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { useNavigate } from "react-router-dom";
+
 const AuthPage = () => {
   const [isLoginVisible, setIsLoginVisible] = useState(false);
   const [isRegisterVisible, setIsRegisterVisible] = useState(true);
   const [animationDirection, setAnimationDirection] = useState('left');
-const navigate = useNavigate();
+  const navigate = useNavigate();
+  
   // Registration state
   const [userRole, setUserRole] = useState('user');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [showRegisterConfirmPassword, setShowRegisterConfirmPassword] = useState(false);
    
-
   const [formData, setFormData] = useState({
     role: 'user',
     name: '',
@@ -38,7 +39,7 @@ const navigate = useNavigate();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
-const API_URL1 = 'https://lawyerbackend-qrqa.onrender.com/lawapi/auth';
+  const API_URL1 = 'https://lawyerbackend-qrqa.onrender.com/lawapi/auth';
   const API_URL = 'https://lawyerbackend-qrqa.onrender.com/lawapi/auth/register';
 
   // Toggle between login and registration with animation
@@ -46,17 +47,15 @@ const API_URL1 = 'https://lawyerbackend-qrqa.onrender.com/lawapi/auth';
     setAnimationDirection(direction);
     
     if (direction === 'left') {
-      // Show login, hide register
       setIsLoginVisible(true);
       setTimeout(() => setIsRegisterVisible(false), 300);
     } else {
-      // Show register, hide login
       setIsRegisterVisible(true);
       setTimeout(() => setIsLoginVisible(false), 300);
     }
   };
 
-  // Registration handlers
+  // Registration handlers (keep the same logic)
   const handleRoleChange = (e) => {
     const role = e.target.value;
     setUserRole(role);
@@ -74,10 +73,7 @@ const API_URL1 = 'https://lawyerbackend-qrqa.onrender.com/lawapi/auth';
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
+    setFormData({ ...formData, [name]: value });
   };
 
   const validateRegistrationForm = () => {
@@ -101,147 +97,167 @@ const API_URL1 = 'https://lawyerbackend-qrqa.onrender.com/lawapi/auth';
     return true;
   };
 
-  const handleRegister = async (e) => {
-    e.preventDefault();
+ const handleRegister = async (e) => {
+  e.preventDefault();
+  if (!validateRegistrationForm()) return;
+  setIsSubmitting(true);
+
+  try {
+    let submissionData;
     
-    if (!validateRegistrationForm()) return;
-
-    setIsSubmitting(true);
-
-    try {
-      let submissionData;
-      
-      if (userRole === 'admin') {
-        submissionData = {
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          role: formData.role,
-          phone: formData.phone
-        };
-      } else if (userRole === 'lawyer') {
-        submissionData = {
-          role: formData.role,
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          addressline: formData.addressline,
-          city: formData.city,
-          licenseNumber: formData.licenseNumber,
-          phone: formData.phone,
-          experience: formData.experience,
-          specialization: formData.specialization
-        };
-      } else { // user
-        submissionData = {
-          role: formData.role,
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          password: formData.password,
-          addressline: formData.addressline,
-          city: formData.city,
-          purpose: formData.purpose
-        };
-      }
-
-      const response = await axios.post(API_URL, submissionData);
-      
-      if (response.data.success) {
-        toast.success('Registration successful!');
-        // Reset form and show login
-        setFormData({
-          role: 'user',
-          name: '',
-          email: '',
-          phone: '',
-          password: '',
-     
-          addressline: '',
-          city: '',
-          purpose: '',
-          licenseNumber: '',
-          experience: '',
-          specialization: ''
-        });
-        setUserRole('user');
-        toggleAuthForms('left');
-      } else {
-        toast.error(response.data.message || 'Registration failed');
-      }
-    } catch (error) {
-      console.error('Registration error:', error);
-      toast.error(error.response?.data?.message || 'An error occurred during registration');
-    } finally {
-      setIsSubmitting(false);
+    if (userRole === 'admin') {
+      submissionData = {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: formData.role,
+        phone: formData.phone
+      };
+    } else if (userRole === 'lawyer') {
+      submissionData = {
+        role: formData.role,
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        addressline: formData.addressline,
+        city: formData.city,
+        licenseNumber: formData.licenseNumber,
+        phone: formData.phone,
+        experience: formData.experience,
+        specialization: formData.specialization
+      };
+    } else { // user
+      submissionData = {
+        role: formData.role,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+        addressline: formData.addressline,
+        city: formData.city,
+        purpose: formData.purpose
+      };
     }
-  };
 
+    const response = await axios.post(API_URL, submissionData);
+    
+    if (response.data.success) {
+      toast.success('Registration successful! Please login with your credentials.');
+      
+      // Reset form but keep email and role for auto-fill
+      setFormData({
+        role: 'user',
+        name: '',
+        email: '',
+        phone: '',
+        password: '',
+        confirmPassword: '',
+        addressline: '',
+        city: '',
+        purpose: '',
+        licenseNumber: '',
+        experience: '',
+        specialization: ''
+      });
+      
+      // Auto-fill login form and switch
+      setCredentials({
+        email: submissionData.email,  // Pre-fill registered email
+        password: '',                 // Clear password field
+        role: submissionData.role     // Pre-fill registered role
+      });
+      
+      // Automatically switch to login form
+      setIsLoginVisible(true);
+      setIsRegisterVisible(false);
+      setAnimationDirection('left');
+      
+    } else {
+      toast.error(response.data.message || 'Registration failed');
+    }
+  } catch (error) {
+    console.error('Registration error:', error);
+    toast.error(error.response?.data?.message || 'An error occurred during registration');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
   // Login handlers
   const handleLoginChange = (e) => {
     setCredentials({ ...credentials, [e.target.name]: e.target.value });
   };
-const handleLogin = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  setError('');
-  
-  try {
-    console.log("Sending login request with:", credentials);
-    const response = await axios.post(`${API_URL1}/login`, credentials);
-    console.log("Login response:", response.data);
 
-    // Check for successful login message instead of success flag
-    if (response.data.message && response.data.message.includes('successful')) {
-      // Store authentication data
-      sessionStorage.setItem('token', response.data.accessToken); // Note: using accessToken
-      sessionStorage.setItem('role', response.data.user?.role || credentials.role);
-      sessionStorage.setItem('userData', JSON.stringify(response.data.user));
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    
+    try {
+      const response = await axios.post(`${API_URL1}/login`, credentials);
+      
+      if (response.data.message && response.data.message.includes('successful')) {
+        sessionStorage.setItem('token', response.data.accessToken);
+        sessionStorage.setItem('role', response.data.user?.role || credentials.role);
+        sessionStorage.setItem('userData', JSON.stringify(response.data.user));
+console.log("Logged in user:", response.data.user);
 
-      console.log("Session storage after login:", {
-        token: sessionStorage.getItem('token'),
-        role: sessionStorage.getItem('role'),
-        userData: sessionStorage.getItem('userData')
-      });
-
-      toast.success('Login successful!');
-
-      // Get role - prioritize API response over form selection
-      const userRole = response.data.user?.role || credentials.role;
-      console.log("Determined user role:", userRole);
-
-      // Navigate based on role
-      const targetPath = {
-        admin: '/admin/dashboard',
-        lawyer: '/lawyer/dashboard',
-        user: '/user/dashboard'
-      }[userRole.toLowerCase()] || '/';
-
-      console.log("Attempting navigation to:", targetPath);
-      navigate(targetPath);
-    } else {
-      console.error("Login failed:", response.data.message);
-      setError(response.data.message || 'Login failed.');
+        toast.success('Login successful!');
+        const userRole = response.data.user?.role || credentials.role;
+        const targetPath = {
+          admin: '/admin/dashboard',
+          lawyer: '/lawyer/dashboard',
+          user: '/user/dashboard'
+        }[userRole.toLowerCase()] || '/';
+        navigate(targetPath);
+      } else {
+        setError(response.data.message || 'Login failed.');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Something went wrong.');
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error("Login error:", err);
-    setError(err.response?.data?.message || 'Something went wrong.');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <div className="auth-page" style={{
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%);',
+      background: 'white',
       minHeight: '100vh',
-      padding: '2rem 0',
+      padding: '1rem 0',
       overflow: 'hidden'
     }}>
       <ToastContainer position="top-center" autoClose={5000} />
       <div className="container">
-        <div className="row justify-content-center">
-          <div className="col-lg-8">
+        <div className="row align-items-center">
+          {/* Image Section (Left Column) */}
+        <div className="col-lg-6 d-none d-lg-block h-100">
+  <div className="h-100 d-flex flex-column justify-content-center p-4">
+    <div className="position-relative h-100" style={{ minHeight: '80vh' }}>
+      <img 
+        src="images/law1.jpg" 
+        alt="Legal Services Illustration"
+        className="img-fluid rounded shadow h-100 w-100"
+        style={{ 
+          objectFit: 'cover',
+          opacity: 0.9,
+          filter: 'brightness(0.95)'
+        }}
+      />
+      <div className="position-absolute bottom-0 start-0 end-0 p-4 text-white" 
+           style={{ 
+             background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)',
+             borderBottomLeftRadius: '15px',
+             borderBottomRightRadius: '15px'
+           }}>
+        <h3 className="fw-bold">Find Your Legal Solution</h3>
+        <p className="mb-0">Connect with expert lawyers for your legal needs</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+          {/* Auth Form Section (Right Column) */}
+          <div className="col-lg-6 col-md-12">
             {/* Registration Form */}
             <div 
               className={`auth-form-container ${isRegisterVisible ? 'active' : ''} ${animationDirection === 'right' ? 'slide-out-right' : 'slide-in-right'}`}
@@ -252,59 +268,77 @@ const handleLogin = async (e) => {
                 overflow: 'hidden',
                 border: 'none'
               }}>
-                <div className="card-header py-4" style={{
+                <div className="card-header py-3" style={{
                   background: 'linear-gradient(to right, #283e51, #485563)',
                   color: 'white'
                 }}>
-                  <h2 className="text-center mb-0" style={{ fontWeight: '700' }}>
+                  <h3 className="text-center mb-0" style={{ fontWeight: '600', fontSize: '1.5rem' }}>
                     <i className="fas fa-user-plus me-2"></i>
-                    Create Your Account
-                  </h2>
-                  <p className="text-center mb-0 mt-2">Join us today and get started</p>
+                    Create Account
+                  </h3>
                 </div>
-                <div className="card-body p-5" style={{ backgroundColor: '#f8f9fa' }}>
+                <div className="card-body p-4" style={{ backgroundColor: '#f8f9fa' }}>
                   <form onSubmit={handleRegister}>
                     {/* Role Selection */}
-                   <div className="form-group mb-4">
-  <label className="d-block mb-3 fw-bold">I am registering as:</label>
-  <div className="d-flex flex-wrap gap-2">
-    <button
-      type="button"
-      className={`btn ${userRole === 'user' ? 'btn-outline-dark' : 'btn-outline-dark'} rounded-pill px-4`}
-      onClick={() => handleRoleChange({ target: { value: 'user' } })}
-    >
-      <i className="fas fa-user me-2"></i> Customer
-    </button>
-    <button
-      type="button"
-      className={`btn ${userRole === 'admin' ? 'btn-outline-dark' : 'btn-outline-dark'} rounded-pill px-4`}
-      onClick={() => handleRoleChange({ target: { value: 'admin' } })}
-    >
-      <i className="fas fa-user-shield me-2"></i> Super Admin
-    </button>
-    <button
-      type="button"
-      className={`btn ${userRole === 'lawyer' ? 'btn-outline-dark' : 'btn-outline-dark'} rounded-pill px-4`}
-      onClick={() => handleRoleChange({ target: { value: 'lawyer' } })}
-    >
-      <i className="fas fa-gavel me-2"></i> Lawyer
-    </button>
-  </div>
-</div>
+                    <div className="form-group mb-3">
+                      <label className="d-block mb-2 fw-bold" style={{ fontSize: '0.9rem' }}>I am registering as:</label>
+                      <div className="d-flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          className={`btn ${userRole === 'user' ? 'btn-dark' : 'btn-outline-dark'} btn-sm rounded-pill px-3`}
+                          onClick={() => handleRoleChange({ target: { value: 'user' } })}
+                        >
+                          <i className="fas fa-user me-1"></i> Customer
+                        </button>
+                        <button
+                          type="button"
+                          className={`btn ${userRole === 'admin' ? 'btn-dark' : 'btn-outline-dark'} btn-sm rounded-pill px-3`}
+                          onClick={() => handleRoleChange({ target: { value: 'admin' } })}
+                        >
+                          <i className="fas fa-user-shield me-1"></i> Admin
+                        </button>
+                        <button
+                          type="button"
+                          className={`btn ${userRole === 'lawyer' ? 'btn-dark' : 'btn-outline-dark'} btn-sm rounded-pill px-3`}
+                          onClick={() => handleRoleChange({ target: { value: 'lawyer' } })}
+                        >
+                          <i className="fas fa-gavel me-1"></i> Lawyer
+                        </button>
+                      </div>
+                    </div>
 
-
+                    {/* Basic Information - 3 columns */}
                     <div className="row">
-                      {/* Common Fields */}
-                      <div className="col-md-6">
-                        <div className="form-group mb-3">
-                          <label className="fw-bold">Email Address <span className="text-danger">*</span></label>
-                          <div className="input-group">
+                      <div className="col-md-4">
+                        <div className="form-group mb-2">
+                          <label className="fw-bold" style={{ fontSize: '0.9rem' }}>Full Name <span className="text-danger">*</span></label>
+                          <div className="input-group input-group-sm">
                             <span className="input-group-text bg-white">
-                              <i className="fas fa-envelope text-primary"></i>
+                              <i className="fas fa-user text-primary" style={{ fontSize: '0.8rem' }}></i>
+                            </span>
+                            <input
+                              type="text"
+                              className="form-control form-control-sm"
+                              name="name"
+                              value={formData.name}
+                              onChange={handleInputChange}
+                              required={userRole !== "admin"}
+                              placeholder="John Doe"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="col-md-4">
+                        <div className="form-group mb-2">
+                          <label className="fw-bold" style={{ fontSize: '0.9rem' }}>Email <span className="text-danger">*</span></label>
+                          <div className="input-group input-group-sm">
+                            <span className="input-group-text bg-white">
+                              <i className="fas fa-envelope text-primary" style={{ fontSize: '0.8rem' }}></i>
                             </span>
                             <input
                               type="email"
-                              className="form-control"
+                              className="form-control form-control-sm"
                               name="email"
                               value={formData.email}
                               onChange={handleInputChange}
@@ -315,47 +349,16 @@ const handleLogin = async (e) => {
                         </div>
                       </div>
 
-                     <div className="col-md-6">
-  <div className="form-group mb-3">
-    <label className="fw-bold">
-      Full Name{" "}
-      {userRole !== "admin" && <span className="text-danger">*</span>}
-    </label>
-    <div className="input-group">
-      <span className="input-group-text bg-white">
-        <i className="fas fa-user text-primary"></i>
-      </span>
-      <input
-        type="text"
-        className="form-control"
-        name="name"
-        value={formData.name}
-        onChange={handleInputChange}
-        required={userRole !== "admin"}
-        // readOnly={userRole === "admin"} // ✅ instead of disabled
-        placeholder="John Doe"
-      />
-    </div>
-    {/* Include hidden input to ensure admin name is submitted */}
-    {userRole === "admin" && (
-      <input type="hidden" name="name" value={formData.name} />
-    )}
-  </div>
-</div>
-
-                    </div>
-
-                    <div className="row">
-                      <div className="col-md-6">
-                        <div className="form-group mb-3">
-                          <label className="fw-bold">Phone Number <span className="text-danger">*</span></label>
-                          <div className="input-group">
+                      <div className="col-md-4">
+                        <div className="form-group mb-2">
+                          <label className="fw-bold" style={{ fontSize: '0.9rem' }}>Phone <span className="text-danger">*</span></label>
+                          <div className="input-group input-group-sm">
                             <span className="input-group-text bg-white">
-                              <i className="fas fa-phone text-primary"></i>
+                              <i className="fas fa-phone text-primary" style={{ fontSize: '0.8rem' }}></i>
                             </span>
                             <input
                               type="tel"
-                              className="form-control"
+                              className="form-control form-control-sm"
                               name="phone"
                               value={formData.phone}
                               onChange={handleInputChange}
@@ -365,17 +368,20 @@ const handleLogin = async (e) => {
                           </div>
                         </div>
                       </div>
+                    </div>
 
-                      <div className="col-md-6">
-                        <div className="form-group mb-3">
-                          <label className="fw-bold">Password <span className="text-danger">*</span></label>
-                          <div className="input-group">
+                    {/* Password Section - 3 columns */}
+                    <div className="row">
+                      <div className="col-md-4">
+                        <div className="form-group mb-2">
+                          <label className="fw-bold" style={{ fontSize: '0.9rem' }}>Password <span className="text-danger">*</span></label>
+                          <div className="input-group input-group-sm">
                             <span className="input-group-text bg-white">
-                              <i className="fas fa-lock text-primary"></i>
+                              <i className="fas fa-lock text-primary" style={{ fontSize: '0.8rem' }}></i>
                             </span>
                             <input
                               type={showRegisterPassword ? "text" : "password"}
-                              className="form-control"
+                              className="form-control form-control-sm"
                               name="password"
                               value={formData.password}
                               onChange={handleInputChange}
@@ -385,28 +391,26 @@ const handleLogin = async (e) => {
                             />
                             <button
                               type="button"
-                              className="btn btn-outline-secondary"
+                              className="btn btn-outline-secondary btn-sm"
                               onClick={() => setShowRegisterPassword(!showRegisterPassword)}
                             >
-                              {showRegisterPassword ? <FaEyeSlash /> : <FaEye />}
+                              {showRegisterPassword ? <FaEyeSlash size={14} /> : <FaEye size={14} />}
                             </button>
                           </div>
-                          <small className="text-muted">Minimum 6 characters</small>
+                          <small className="text-muted" style={{ fontSize: '0.75rem' }}>Min 6 characters</small>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="row">
-                      <div className="col-md-6">
-                        <div className="form-group mb-3">
-                          <label className="fw-bold">Confirm Password <span className="text-danger">*</span></label>
-                          <div className="input-group">
+                      <div className="col-md-4">
+                        <div className="form-group mb-2">
+                          <label className="fw-bold" style={{ fontSize: '0.9rem' }}>Confirm Password <span className="text-danger">*</span></label>
+                          <div className="input-group input-group-sm">
                             <span className="input-group-text bg-white">
-                              <i className="fas fa-lock text-primary"></i>
+                              <i className="fas fa-lock text-primary" style={{ fontSize: '0.8rem' }}></i>
                             </span>
                             <input
                               type={showRegisterConfirmPassword ? "text" : "password"}
-                              className="form-control"
+                              className="form-control form-control-sm"
                               name="confirmPassword"
                               value={formData.confirmPassword}
                               onChange={handleInputChange}
@@ -415,27 +419,26 @@ const handleLogin = async (e) => {
                             />
                             <button
                               type="button"
-                              className="btn btn-outline-secondary"
+                              className="btn btn-outline-secondary btn-sm"
                               onClick={() => setShowRegisterConfirmPassword(!showRegisterConfirmPassword)}
                             >
-                              {showRegisterConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                              {showRegisterConfirmPassword ? <FaEyeSlash size={14} /> : <FaEye size={14} />}
                             </button>
                           </div>
                         </div>
                       </div>
 
-                      {/* City field for non-admin users */}
                       {(userRole === 'user' || userRole === 'lawyer') && (
-                        <div className="col-md-6">
-                          <div className="form-group mb-3">
-                            <label className="fw-bold">City <span className="text-danger">*</span></label>
-                            <div className="input-group">
+                        <div className="col-md-4">
+                          <div className="form-group mb-2">
+                            <label className="fw-bold" style={{ fontSize: '0.9rem' }}>City <span className="text-danger">*</span></label>
+                            <div className="input-group input-group-sm">
                               <span className="input-group-text bg-white">
-                                <i className="fas fa-city text-primary"></i>
+                                <i className="fas fa-city text-primary" style={{ fontSize: '0.8rem' }}></i>
                               </span>
                               <input
                                 type="text"
-                                className="form-control"
+                                className="form-control form-control-sm"
                                 name="city"
                                 value={formData.city}
                                 onChange={handleInputChange}
@@ -448,17 +451,17 @@ const handleLogin = async (e) => {
                       )}
                     </div>
 
-                    {/* Address field for non-admin users */}
+                    {/* Address Section - Full width */}
                     {(userRole === 'user' || userRole === 'lawyer') && (
-                      <div className="form-group mb-3">
-                        <label className="fw-bold">Address</label>
-                        <div className="input-group">
+                      <div className="form-group mb-2">
+                        <label className="fw-bold" style={{ fontSize: '0.9rem' }}>Address</label>
+                        <div className="input-group input-group-sm">
                           <span className="input-group-text bg-white">
-                            <i className="fas fa-map-marker-alt text-primary"></i>
+                            <i className="fas fa-map-marker-alt text-primary" style={{ fontSize: '0.8rem' }}></i>
                           </span>
                           <input
                             type="text"
-                            className="form-control"
+                            className="form-control form-control-sm"
                             name="addressline"
                             value={formData.addressline}
                             onChange={handleInputChange}
@@ -469,40 +472,41 @@ const handleLogin = async (e) => {
                       </div>
                     )}
 
-                    {/* Customer-specific Field */}
+                    {/* Purpose Section - Full width */}
                     {userRole === 'user' && (
-                      <div className="form-group mb-3">
-                        <label className="fw-bold">Purpose of Registration <span className="text-danger">*</span></label>
-                        <div className="input-group">
+                      <div className="form-group mb-2">
+                        <label className="fw-bold" style={{ fontSize: '0.9rem' }}>Purpose <span className="text-danger">*</span></label>
+                        <div className="input-group input-group-sm">
                           <span className="input-group-text bg-white">
-                            <i className="fas fa-comment-dots text-primary"></i>
+                            <i className="fas fa-comment-dots text-primary" style={{ fontSize: '0.8rem' }}></i>
                           </span>
                           <textarea
-                            className="form-control"
+                            className="form-control form-control-sm"
                             name="purpose"
                             value={formData.purpose}
                             onChange={handleInputChange}
                             rows="2"
                             required
                             placeholder="Briefly describe your purpose..."
+                            style={{ fontSize: '0.9rem' }}
                           />
                         </div>
                       </div>
                     )}
 
-                    {/* Lawyer-specific Fields */}
+                    {/* Lawyer-specific Fields - 3 columns */}
                     {userRole === 'lawyer' && (
                       <div className="row">
                         <div className="col-md-4">
-                          <div className="form-group mb-3">
-                            <label className="fw-bold">License Number <span className="text-danger">*</span></label>
-                            <div className="input-group">
+                          <div className="form-group mb-2">
+                            <label className="fw-bold" style={{ fontSize: '0.9rem' }}>License No. <span className="text-danger">*</span></label>
+                            <div className="input-group input-group-sm">
                               <span className="input-group-text bg-white">
-                                <i className="fas fa-id-card text-primary"></i>
+                                <i className="fas fa-id-card text-primary" style={{ fontSize: '0.8rem' }}></i>
                               </span>
                               <input
                                 type="text"
-                                className="form-control"
+                                className="form-control form-control-sm"
                                 name="licenseNumber"
                                 value={formData.licenseNumber}
                                 onChange={handleInputChange}
@@ -514,15 +518,15 @@ const handleLogin = async (e) => {
                         </div>
 
                         <div className="col-md-4">
-                          <div className="form-group mb-3">
-                            <label className="fw-bold">Experience <span className="text-danger">*</span></label>
-                            <div className="input-group">
+                          <div className="form-group mb-2">
+                            <label className="fw-bold" style={{ fontSize: '0.9rem' }}>Experience <span className="text-danger">*</span></label>
+                            <div className="input-group input-group-sm">
                               <span className="input-group-text bg-white">
-                                <i className="fas fa-briefcase text-primary"></i>
+                                <i className="fas fa-briefcase text-primary" style={{ fontSize: '0.8rem' }}></i>
                               </span>
                               <input
                                 type="text"
-                                className="form-control"
+                                className="form-control form-control-sm"
                                 name="experience"
                                 value={formData.experience}
                                 onChange={handleInputChange}
@@ -534,15 +538,15 @@ const handleLogin = async (e) => {
                         </div>
 
                         <div className="col-md-4">
-                          <div className="form-group mb-3">
-                            <label className="fw-bold">Specialization <span className="text-danger">*</span></label>
-                            <div className="input-group">
+                          <div className="form-group mb-2">
+                            <label className="fw-bold" style={{ fontSize: '0.9rem' }}>Specialization <span className="text-danger">*</span></label>
+                            <div className="input-group input-group-sm">
                               <span className="input-group-text bg-white">
-                                <i className="fas fa-star text-primary"></i>
+                                <i className="fas fa-star text-primary" style={{ fontSize: '0.8rem' }}></i>
                               </span>
                               <input
                                 type="text"
-                                className="form-control"
+                                className="form-control form-control-sm"
                                 name="specialization"
                                 value={formData.specialization}
                                 onChange={handleInputChange}
@@ -555,15 +559,16 @@ const handleLogin = async (e) => {
                       </div>
                     )}
 
-                    <div className="form-group mt-4">
+                    <div className="form-group mt-3">
                       <button
                         type="submit"
-                        className="btn btn-primary btn-lg w-100 py-3 fw-bold"
+                        className="btn btn-primary w-100 py-2 fw-bold"
                         disabled={isSubmitting}
                         style={{
                           background: 'linear-gradient(to right, #283e51, #485563)',
                           border: 'none',
-                          borderRadius: '50px'
+                          borderRadius: '5px',
+                          fontSize: '0.9rem'
                         }}
                       >
                         {isSubmitting ? (
@@ -573,19 +578,20 @@ const handleLogin = async (e) => {
                           </>
                         ) : (
                           <>
-                            <i className="fas fa-user-plus me-2"></i> Complete Registration
+                            <i className="fas fa-user-plus me-2"></i> Register
                           </>
                         )}
                       </button>
                     </div>
 
-                    <div className="text-center mt-3">
-                      <p className="mb-0">
+                    <div className="text-center mt-2">
+                      <p className="mb-0" style={{ fontSize: '0.9rem' }}>
                         Already have an account?{' '}
                         <button 
                           type="button" 
                           className="text-primary fw-bold ms-1 btn btn-link p-0 border-0"
                           onClick={() => toggleAuthForms('left')}
+                          style={{ fontSize: '0.9rem' }}
                         >
                           Sign In
                         </button>
@@ -598,132 +604,133 @@ const handleLogin = async (e) => {
 
             {/* Login Form */}
             <div 
-  className={`auth-form-container ${isLoginVisible ? 'active' : ''} ${animationDirection === 'left' ? 'slide-out-left' : 'slide-in-left'}`}
-  style={{ display: isLoginVisible ? 'block' : 'none' }}
->
-  <div className="card shadow-lg border-0" style={{
-    borderRadius: '15px',
-    overflow: 'hidden',
-    border: 'none'
-  }}>
-    <div className="card-header py-4" style={{
-      background: 'linear-gradient(to right, #ff758c 0%, #ff7eb3 100%)',
-      color: 'white'
-    }}>
-      <h2 className="text-center mb-0" style={{ fontWeight: '700' }}>
-        <i className="fas fa-sign-in-alt me-2"></i>
-        Welcome Back
-      </h2>
-      <p className="text-center mb-0 mt-2">Sign in to continue</p>
-    </div>
-    <div className="card-body p-5" style={{ backgroundColor: '#f8f9fa' }}>
-      <form onSubmit={handleLogin}>
-        {error && <div className="alert alert-danger">{error}</div>}
-        
-        <div className="form-group mb-3">
-          <label className="fw-bold">Role <span className="text-danger">*</span></label>
-          <div className="input-group">
-            <span className="input-group-text bg-white">
-              <i className="fas fa-user-tag text-primary"></i>
-            </span>
-            <select
-              className="form-control"
-              name="role"
-              value={credentials.role || ''}
-              onChange={handleLoginChange}
-              required
+              className={`auth-form-container ${isLoginVisible ? 'active' : ''} ${animationDirection === 'left' ? 'slide-out-left' : 'slide-in-left'}`}
+              style={{ display: isLoginVisible ? 'block' : 'none' }}
             >
-              <option value="">Select your role</option>
-              <option value="user">Customer</option>
-              <option value="admin">Admin</option>
-              <option value="lawyer">Lawyer</option>
-            </select>
-          </div>
-        </div>
+              <div className="card shadow-lg border-0" style={{
+                borderRadius: '15px',
+                overflow: 'hidden',
+                border: 'none'
+              }}>
+                <div className="card-header py-3" style={{
+                  background: 'linear-gradient(to right, #283e51, #485563)',
+                  color: 'white'
+                }}>
+                  <h3 className="text-center mb-0" style={{ fontWeight: '600', fontSize: '1.5rem' }}>
+                    <i className="fas fa-sign-in-alt me-2"></i>
+                    Welcome Back
+                  </h3>
+                </div>
+                <div className="card-body p-4" style={{ backgroundColor: '#f8f9fa' }}>
+                  <form onSubmit={handleLogin}>
+                    {error && <div className="alert alert-danger py-2" style={{ fontSize: '0.9rem' }}>{error}</div>}
+                    
+                    <div className="form-group mb-2">
+                      <label className="fw-bold" style={{ fontSize: '0.9rem' }}>Role <span className="text-danger">*</span></label>
+                      <div className="input-group input-group-sm">
+                        <span className="input-group-text bg-white">
+                          <i className="fas fa-user-tag text-primary" style={{ fontSize: '0.8rem' }}></i>
+                        </span>
+                        <select
+                          className="form-control form-control-sm"
+                          name="role"
+                          value={credentials.role || ''}
+                          onChange={handleLoginChange}
+                          required
+                        >
+                          <option value="">Select role</option>
+                          <option value="user">Customer</option>
+                          <option value="admin">Admin</option>
+                          <option value="lawyer">Lawyer</option>
+                        </select>
+                      </div>
+                    </div>
 
-        <div className="form-group mb-3">
-          <label className="fw-bold">Email Address <span className="text-danger">*</span></label>
-          <div className="input-group">
-            <span className="input-group-text bg-white">
-              <i className="fas fa-envelope text-primary"></i>
-            </span>
-            <input
-              type="email"
-              className="form-control"
-              name="email"
-              value={credentials.email}
-              onChange={handleLoginChange}
-              required
-              placeholder="example@domain.com"
-            />
-          </div>
-        </div>
+                    <div className="form-group mb-2">
+                      <label className="fw-bold" style={{ fontSize: '0.9rem' }}>Email <span className="text-danger">*</span></label>
+                      <div className="input-group input-group-sm">
+                        <span className="input-group-text bg-white">
+                          <i className="fas fa-envelope text-primary" style={{ fontSize: '0.8rem' }}></i>
+                        </span>
+                        <input
+                          type="email"
+                          className="form-control form-control-sm"
+                          name="email"
+                          value={credentials.email}
+                          onChange={handleLoginChange}
+                          required
+                          placeholder="example@domain.com"
+                        />
+                      </div>
+                    </div>
 
-        <div className="form-group mb-3">
-          <label className="fw-bold">Password <span className="text-danger">*</span></label>
-          <div className="input-group">
-            <span className="input-group-text bg-white">
-              <i className="fas fa-lock text-primary"></i>
-            </span>
-            <input
-              type={showLoginPassword ? "text" : "password"}
-              className="form-control"
-              name="password"
-              value={credentials.password}
-              onChange={handleLoginChange}
-              required
-              placeholder="••••••"
-            />
-            <button
-              type="button"
-              className="btn btn-outline-secondary"
-              onClick={() => setShowLoginPassword(!showLoginPassword)}
-            >
-              {showLoginPassword ? <FaEyeSlash /> : <FaEye />}
-            </button>
-          </div>
-        </div>
+                    <div className="form-group mb-2">
+                      <label className="fw-bold" style={{ fontSize: '0.9rem' }}>Password <span className="text-danger">*</span></label>
+                      <div className="input-group input-group-sm">
+                        <span className="input-group-text bg-white">
+                          <i className="fas fa-lock text-primary" style={{ fontSize: '0.8rem' }}></i>
+                        </span>
+                        <input
+                          type={showLoginPassword ? "text" : "password"}
+                          className="form-control form-control-sm"
+                          name="password"
+                          value={credentials.password}
+                          onChange={handleLoginChange}
+                          required
+                          placeholder="••••••"
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-outline-secondary btn-sm"
+                          onClick={() => setShowLoginPassword(!showLoginPassword)}
+                        >
+                          {showLoginPassword ? <FaEyeSlash size={14} /> : <FaEye size={14} />}
+                        </button>
+                      </div>
+                    </div>
 
-        <div className="form-group mt-4">
-          <button
-            type="submit"
-            className="btn btn-primary btn-lg w-100 py-3 fw-bold"
-            disabled={loading}
-            style={{
-              background: 'linear-gradient(to right, #ff758c 0%, #ff7eb3 100%)',
-              border: 'none',
-              borderRadius: '50px'
-            }}
-          >
-            {loading ? (
-              <>
-                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                Logging in...
-              </>
-            ) : (
-              <>
-                <i className="fas fa-sign-in-alt me-2"></i> Login
-              </>
-            )}
-          </button>
-        </div>
+                    <div className="form-group mt-3">
+                      <button
+                        type="submit"
+                        className="btn btn-primary w-100 py-2 fw-bold"
+                        disabled={loading}
+                        style={{
+                          background: 'linear-gradient(to right, #283e51, #485563)',
+                          border: 'none',
+                          borderRadius: '5px',
+                          fontSize: '0.9rem'
+                        }}
+                      >
+                        {loading ? (
+                          <>
+                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            Logging in...
+                          </>
+                        ) : (
+                          <>
+                            <i className="fas fa-sign-in-alt me-2"></i> Login
+                          </>
+                        )}
+                      </button>
+                    </div>
 
-        <div className="text-center mt-3">
-          <p className="mb-0">
-            Don't have an account?{' '}
-            <button 
-              type="button" 
-              className="text-primary fw-bold ms-1 btn btn-link p-0 border-0"
-              onClick={() => toggleAuthForms('right')}
-            >
-              Register
-            </button>
-          </p>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
+                    <div className="text-center mt-2">
+                      <p className="mb-0" style={{ fontSize: '0.9rem' }}>
+                        Don't have an account?{' '}
+                        <button 
+                          type="button" 
+                          className="text-primary fw-bold ms-1 btn btn-link p-0 border-0"
+                          onClick={() => toggleAuthForms('right')}
+                          style={{ fontSize: '0.9rem' }}
+                        >
+                          Register
+                        </button>
+                      </p>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

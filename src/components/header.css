@@ -7,7 +7,7 @@
     z-index: 997;
     height: 80px;
     box-shadow: 0px 2px 20px rgba(1, 41, 112, 0.1);
-    background-color: #fff;
+  background: #1E4D7A;
     padding-left: 20px;
 }
 
@@ -17,5 +17,5 @@
     font-size: 42px;
     padding-left: 10px;
     cursor: pointer;
-    color: #012970;
+    color: #d1d2d3;
 }

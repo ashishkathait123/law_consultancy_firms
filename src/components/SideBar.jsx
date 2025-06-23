@@ -38,12 +38,12 @@ const SideBar = () => {
     <aside id="sidebar" className="sidebar">
       <ul className="sidebar-nav" id="sidebar-nav">
         {/* Common Items for All Roles */}
-        <li className="nav-item">
+        {/* <li className="nav-item">
           <Link className="nav-link" to="/dashboard">
             <IoGridOutline size={20} />
             <span>Dashboard</span>
           </Link>
-        </li>
+        </li> */}
 
         {/* Admin Specific Items */}
         {role === "admin" && (
@@ -209,32 +209,40 @@ const SideBar = () => {
             </li>
 
             <li className="nav-item">
-              <Link className="nav-link" to="/case-history">
+              <Link className="nav-link" to="/user/CaseHistory">
                 <FaHistory size={20} />
                 <span>Case History</span>
               </Link>
             </li>
 
             <li className="nav-item">
-              <Link className="nav-link" to="/find-lawyer">
+              <Link className="nav-link" to="/user/FindLawyer">
                 <FaGavel size={20} />
                 <span>Find a Lawyer</span>
               </Link>
+            
             </li>
-          </>
-        )}
-
-        {/* Common Bottom Items */}
-        <li className="nav-item">
-          <Link className="nav-link" to="/profile">
+            <li className="nav-item">
+          <Link className="nav-link" to="/user/profile">
             <i className="bi bi-person"></i>
             <span>Profile</span>
           </Link>
         </li>
+          </>
+        )}
+
+        {/* Common Bottom Items */}
+        
         <li className="nav-item">
           <Link className="nav-link" to="/help">
             <i className="bi bi-question-circle"></i>
             <span>Help</span>
+          </Link>
+        </li>
+        <li className="nav-item">
+          <Link className="nav-link" to="/logout">
+<i className="fas fa-sign-out-alt"></i>
+            <span>Log Out</span>
           </Link>
         </li>
       </ul>
