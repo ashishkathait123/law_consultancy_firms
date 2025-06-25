@@ -15,6 +15,7 @@ import ClientProfile from "../Pages/user/Profile.jsx";
 import FindLawyer from "../Pages/user/FindLawyer.jsx";
 import CaseHistory from "../Pages/user/CaseHistory.jsx";
 import "./main.css";
+import Userprofile from "../Pages/Profile/Profile.jsx";
 
 const Allmain = () => {
   const location = useLocation();
@@ -58,6 +59,7 @@ style={{ background: "#f9f7f1", minHeight: "100vh" }}
           <Route path="/user/profile" element={<AuthRoute> <ClientProfile /> </AuthRoute>} />
           <Route path="/user/FindLawyer" element={<AuthRoute> <FindLawyer /> </AuthRoute>} />
           <Route path="/user/CaseHistory" element={<AuthRoute> <CaseHistory /> </AuthRoute>} />
+          <Route path="/userProfile" element={<AuthRoute><Userprofile/></AuthRoute>}/>
           <Route path="/logout" element={<Logout />} />
         </Routes>
       </main>

@@ -222,21 +222,16 @@ const SideBar = () => {
               </Link>
             
             </li>
-            <li className="nav-item">
-          <Link className="nav-link" to="/user/profile">
-            <i className="bi bi-person"></i>
-            <span>Profile</span>
-          </Link>
-        </li>
+            
           </>
         )}
 
         {/* Common Bottom Items */}
         
         <li className="nav-item">
-          <Link className="nav-link" to="/help">
-            <i className="bi bi-question-circle"></i>
-            <span>Help</span>
+          <Link className="nav-link" to="/userProfile">
+           <i className="bi bi-person-circle"></i>
+            <span>Profile</span>
           </Link>
         </li>
         <li className="nav-item">

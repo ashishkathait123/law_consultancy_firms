@@ -34,6 +34,8 @@ const AuthPage = () => {
     specialization: ''
   });
 
+  
+
   // Login state
   const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
@@ -41,6 +43,8 @@ const AuthPage = () => {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const API_URL1 = 'https://lawyerbackend-qrqa.onrender.com/lawapi/auth';
   const API_URL = 'https://lawyerbackend-qrqa.onrender.com/lawapi/auth/register';
+
+
 
   // Toggle between login and registration with animation
   const toggleAuthForms = (direction) => {
