@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
+import ChatBox from '../../components/ChatBox';
 
-const PaymentModal = ({ show, handleClose, serviceType, lawyer }) => {
+const PaymentModal = ({ show, handleClose, serviceType, lawyer, onPaymentSuccess }) => {
   const [duration, setDuration] = useState(15);
   const [pricePerMinute, setPricePerMinute] = useState(10);
   const [total, setTotal] = useState(150);
   const [loading, setLoading] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [sessionToken, setSessionToken] = useState(null);
 
-  // Service type details
   const serviceDetails = {
     call: { price: 10, icon: 'fa-phone', color: '#0d6efd', name: 'Phone Call' },
     chat: { price: 5, icon: 'fa-comment-dots', color: '#198754', name: 'Chat' },
@@ -20,33 +22,116 @@ const PaymentModal = ({ show, handleClose, serviceType, lawyer }) => {
     setTotal(duration * perMinute);
   }, [serviceType, duration]);
 
+  const generateSessionToken = () => `session_${Math.random().toString(36).substring(2)}_${Date.now()}`;
+
+  const handlePaymentSuccess = async (response) => {
+    const { razorpay_payment_id, razorpay_order_id, razorpay_signature, bookingId } = response;
+
+    console.log("✅ Razorpay Response:", response);
+
+    const token = generateSessionToken();
+    setSessionToken(token);
+    setPaymentSuccess(true);
+
+    const authToken = sessionStorage.getItem('token');
+
+    try {
+      const verifyRes = await fetch('https://lawyerbackend-qrqa.onrender.com/lawapi/common/paymentverify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({
+          razorpay_payment_id,
+          razorpay_order_id,
+          razorpay_signature,
+          bookingId
+        })
+      });
+
+      const responseText = await verifyRes.text();
+      console.log('🔍 Raw verification response:', responseText);
+
+      let verifyData;
+      try {
+        verifyData = JSON.parse(responseText);
+        console.log('✅ Parsed Payment verification:', verifyData);
+      } catch (parseErr) {
+        console.error('❌ Failed to parse verification JSON:', parseErr.message);
+        alert('Invalid server response. Please contact support.');
+        return;
+      }
+
+      if (verifyData.error) {
+        console.error('❌ Payment verification error:', verifyData.message);
+        alert(`Payment verification failed: ${verifyData.message}`);
+        return;
+      }
+
+      if (onPaymentSuccess) {
+        onPaymentSuccess({
+          sessionToken: token,
+          durationMinutes: duration,
+          paymentId: razorpay_payment_id
+        });
+      }
+
+    } catch (err) {
+      console.error('❌ Payment verification failed:', err);
+      alert('Payment succeeded but verification failed.');
+    }
+  };
+
   const handlePayNow = async () => {
     setLoading(true);
-    
+    const authToken = sessionStorage.getItem('token');
+    const service = serviceDetails[serviceType] || serviceDetails.call;
+
     try {
-      const razorpayKey = 'rzp_test_mcwl3oaRQerrOW';
-      const service = serviceDetails[serviceType] || serviceDetails.call;
+      const orderRes = await fetch('https://lawyerbackend-qrqa.onrender.com/lawapi/common/createorder', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({
+          lawyerId: lawyer?.lawyerId,
+          mode: serviceType
+        })
+      });
+
+      const orderData = await orderRes.json();
+      console.log('📦 Order created:', orderData);
+
+      const razorpayOrderId = orderData?.order?.id;
+      const bookingId = orderData?.booking?._id;
+
+      if (!razorpayOrderId || !bookingId) {
+        alert("Failed to create order. Try again.");
+        return;
+      }
 
       const options = {
-        key: razorpayKey,
+        key: 'rzp_test_mcwl3oaRQerrOW',
         amount: total * 100,
         currency: "INR",
         name: `${service.name} with ${lawyer?.name}`,
         description: `${service.name} consultation (${duration} mins)`,
         image: "/logo.png",
-        handler: function (response) {
-          alert(`Payment successful! Payment ID: ${response.razorpay_payment_id}`);
-          handleClose();
+        order_id: razorpayOrderId,
+        handler: (response) => {
+          handlePaymentSuccess({ ...response, bookingId });
         },
         prefill: {
-          name: "User Name",
+          name: "User",
           email: "user@example.com",
           contact: "9999999999"
         },
         notes: {
           lawyerId: lawyer?.lawyerId || "Unknown",
           service: serviceType,
-          duration: duration,
+          duration,
           lawyerName: lawyer?.name || "Unknown"
         },
         theme: {
@@ -56,13 +141,30 @@ const PaymentModal = ({ show, handleClose, serviceType, lawyer }) => {
 
       const rzp = new window.Razorpay(options);
       rzp.open();
+
     } catch (error) {
       console.error("Payment error:", error);
-      alert("Payment failed. Please try again.");
+      alert("Something went wrong while initializing payment.");
     } finally {
       setLoading(false);
     }
   };
+
+  if (paymentSuccess && serviceType === 'chat') {
+    return (
+      <Modal show={show} onHide={handleClose} centered size="lg" fullscreen="md-down">
+        <Modal.Header closeButton style={{ background: '#1E4D7A', color: 'white' }}>
+          <Modal.Title>
+            <i className={`fas ${serviceDetails[serviceType]?.icon} me-2`}></i>
+            Chat Session with {lawyer?.name}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ padding: 0 }}>
+          <ChatBox sessionToken={sessionToken} chatDuration={duration} lawyer={lawyer} />
+        </Modal.Body>
+      </Modal>
+    );
+  }
 
   return (
     <Modal show={show} onHide={handleClose} centered>
@@ -84,10 +186,7 @@ const PaymentModal = ({ show, handleClose, serviceType, lawyer }) => {
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <i 
-                className={`fas ${serviceDetails[serviceType]?.icon} fa-2x`} 
-                style={{ color: serviceDetails[serviceType]?.color }}
-              ></i>
+              <i className={`fas ${serviceDetails[serviceType]?.icon} fa-2x`} style={{ color: serviceDetails[serviceType]?.color }}></i>
             </div>
           </div>
           <h5>Consultation with {lawyer?.name}</h5>
@@ -109,8 +208,8 @@ const PaymentModal = ({ show, handleClose, serviceType, lawyer }) => {
             </Form.Select>
           </Form.Group>
 
-          <div className="p-4 mb-3" style={{ 
-            background: '#f8f9fa', 
+          <div className="p-4 mb-3" style={{
+            background: '#f8f9fa',
             borderRadius: '10px',
             borderLeft: `4px solid ${serviceDetails[serviceType]?.color}`
           }}>
@@ -125,29 +224,23 @@ const PaymentModal = ({ show, handleClose, serviceType, lawyer }) => {
             <hr />
             <div className="d-flex justify-content-between">
               <strong>Total Amount:</strong>
-              <strong className="h5" style={{ color: serviceDetails[serviceType]?.color }}>
-                ₹{total}
-              </strong>
+              <strong className="h5" style={{ color: serviceDetails[serviceType]?.color }}>₹{total}</strong>
             </div>
           </div>
         </Form>
       </Modal.Body>
       <Modal.Footer>
-        <Button 
-          variant="outline-secondary" 
-          onClick={handleClose}
-          style={{ borderRadius: '20px', padding: '8px 20px' }}
-        >
+        <Button variant="outline-secondary" onClick={handleClose} style={{ borderRadius: '20px', padding: '8px 20px' }}>
           Cancel
         </Button>
-        <Button 
-          variant="primary" 
+        <Button
+          variant="primary"
           onClick={handlePayNow}
           disabled={loading}
-          style={{ 
-            background: serviceDetails[serviceType]?.color, 
+          style={{
+            background: serviceDetails[serviceType]?.color,
             border: 'none',
-            borderRadius: '20px', 
+            borderRadius: '20px',
             padding: '8px 20px',
             minWidth: '100px'
           }}
@@ -164,37 +257,6 @@ const PaymentModal = ({ show, handleClose, serviceType, lawyer }) => {
       </Modal.Footer>
     </Modal>
   );
-};
+}; 
 
 export default PaymentModal;
-
-<style jsx>{`
-  .payment-summary {
-    background: #f8f9fa;
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 20px;
-    border-left: 4px solid #1E4D7A;
-  }
-  
-  .service-icon {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 20px;
-  }
-  
-  .duration-select {
-    border-radius: 20px;
-    padding: 10px 15px;
-  }
-  
-  .total-amount {
-    font-size: 1.2rem;
-    color: #1E4D7A;
-    font-weight: 600;
-  }
-`}</style>

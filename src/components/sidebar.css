@@ -4,7 +4,7 @@
 .sidebar {
   position: fixed;
   top: 79px;
-  left: 8px;
+  left: 0px;
   bottom: 0;
   width: 250px;
   z-index: 9999;
@@ -13,7 +13,7 @@
   background: #1E4D7A;
 
 
-  border-radius: 16px;
+  /* border-radius: 16px; */
   color: #ffffff;
   box-shadow: rgba(0, 0, 0, 0.2) 0px 20px 30px;
   transition: all 0.3s ease-in-out;
