@@ -234,6 +234,14 @@ const SideBar = () => {
             <span>Profile</span>
           </Link>
         </li>
+
+         <li className="nav-item">
+          <Link className="nav-link" to="/Mybooking">
+          <i className="bi bi-calendar-check"></i>
+
+            <span>My Booking</span>
+          </Link>
+        </li>
         <li className="nav-item">
           <Link className="nav-link" to="/logout">
 <i className="fas fa-sign-out-alt"></i>

@@ -2,12 +2,14 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { FaUser } from "react-icons/fa";
+import { ToastContainer, toast } from "react-toastify"; // ✅ Import toast
+import "react-toastify/dist/ReactToastify.css";
 import "./profile.css";
 
 const UserProfile = () => {
   const token = sessionStorage.getItem("token");
   const [data, setData] = useState(null);
-const[status, setstatus] = useState("")
+
   const fetchUserData = async () => {
     const headers = {
       "Content-Type": "application/json",
@@ -19,10 +21,10 @@ const[status, setstatus] = useState("")
         "https://lawyerbackend-qrqa.onrender.com/lawapi/auth/profile",
         { headers }
       );
-      console.log("gfdsd",response )
       setData(response.data.data);
     } catch (error) {
       console.error("Error fetching user profile:", error);
+      toast.error("Failed to load profile.");
     }
   };
 
@@ -37,27 +39,26 @@ const[status, setstatus] = useState("")
       </div>
     );
   }
-const handleStatusUpdate = async () => {
-  const headers = {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
+
+  const handleStatusUpdate = async () => {
+    const headers = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+
+    try {
+      await axios.post(
+        `https://lawyerbackend-qrqa.onrender.com/lawapi/common/updatelawyer/${data.lawyerId}`,
+        { status: data.status },
+        { headers }
+      );
+      toast.success("Status updated successfully!");
+    } catch (error) {
+      console.log("Token used:", token);
+      console.error("Error updating status:", error?.response?.data || error.message);
+      toast.error("Failed to update status.");
+    }
   };
-
-  try {
-    const response = await axios.patch(
-      "https://lawyerbackend-qrqa.onrender.com/lawapi/common/dellawyer/Lawyer010", 
-      { status: data.status },
-      { headers }
-    );
-    alert("Status updated successfully!");
-  } catch (error) {
-    console.log("Token used:", token);
-    console.error("Error updating status:", error?.response?.data || error.message);
-    alert("Failed to update status.");
-  }
-};
-
-
 
   return (
     <div className="profile-container">
@@ -75,7 +76,6 @@ const handleStatusUpdate = async () => {
           <div>
             <h3 className="profile-name">{data.name}</h3>
             <p className="profile-role">{data.role}</p>
-              
           </div>
         </div>
         <div className="profile-details">
@@ -97,57 +97,44 @@ const handleStatusUpdate = async () => {
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="right-header ">
+        <div className="right-header">
           <h2>{data.name}</h2>
           <span>{data.role}</span>
-         <div className="">
-          
-<div className="status-update-row">
-  <div className="status-indicator">
-    <span
-      className={`status-dot ${data.status.toLowerCase()}`}
-    ></span>
-    <strong>{data.status}</strong>
-  </div>
-  <select
-    value={data.status}
-    onChange={(e) => setData({ ...data, status: e.target.value })}
-    className="status-dropdown"
-  >
-    <option value="online">Online</option>
-    <option value="offline">Offline</option>
-    <option value="busy">Busy</option>
-  </select>
-  <button className="save-btn" onClick={handleStatusUpdate}>
-    Save Status
-  </button>
-</div>
-
-
-         </div>
-
+          <div className="status-update-row">
+            <div className="status-indicator">
+              <span className={`status-dot ${data.status.toLowerCase()}`}></span>
+              <strong>{data.status}</strong>
+            </div>
+            <select
+              value={data.status}
+              onChange={(e) => setData({ ...data, status: e.target.value })}
+              className="status-dropdown"
+            >
+              <option value="online">Online</option>
+              <option value="offline">Offline</option>
+              <option value="busy">Busy</option>
+            </select>
+            <button className="save-btn" onClick={handleStatusUpdate}>
+              Save Status
+            </button>
+          </div>
         </div>
-
-
 
         <div className="section">
           <h4>Program Info</h4>
           <InfoRow label="Name" value={data.name} />
           <InfoRow label="Phone" value={data.phone} />
-     
           <InfoRow label="Verified" value={data.isverified ? "Yes" : "No"} />
           <InfoRow label="Experience" value={`${data.experience} years`} />
           <InfoRow label="Specialization" value={data.specialization} />
           <InfoRow label="Consultation Fees" value={`₹${data.consultation_fees}`} />
           <InfoRow label="License Number" value={data.licenseNumber} />
-        
         </div>
 
         <div className="section">
           <h4>Institution Info</h4>
           <InfoRow label="Lawyer ID" value={data.lawyerId} />
           <InfoRow label="Email" value={data.email} />
-          {/* <InfoRow label="Password (Hashed)" value={data.password} /> */}
         </div>
 
         <div className="section">
@@ -157,6 +144,9 @@ const handleStatusUpdate = async () => {
           <InfoRow label="Joined On" value={new Date(data.created_at).toDateString()} />
         </div>
       </motion.div>
+
+      {/* ✅ Toast container */}
+      <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );
 };

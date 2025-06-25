@@ -16,7 +16,7 @@ import FindLawyer from "../Pages/user/FindLawyer.jsx";
 import CaseHistory from "../Pages/user/CaseHistory.jsx";
 import "./main.css";
 import Userprofile from "../Pages/Profile/Profile.jsx";
-
+import Mybooking from "../Pages/Mybooking/Mybooking.jsx"
 const Allmain = () => {
   const location = useLocation();
   const [pageTitle, setPageTitle] = useState("");
@@ -60,6 +60,8 @@ style={{ background: "#f9f7f1", minHeight: "100vh" }}
           <Route path="/user/FindLawyer" element={<AuthRoute> <FindLawyer /> </AuthRoute>} />
           <Route path="/user/CaseHistory" element={<AuthRoute> <CaseHistory /> </AuthRoute>} />
           <Route path="/userProfile" element={<AuthRoute><Userprofile/></AuthRoute>}/>
+          <Route path="/Mybooking" element={<AuthRoute><Mybooking/></AuthRoute>}/>
+          
           <Route path="/logout" element={<Logout />} />
         </Routes>
       </main>
