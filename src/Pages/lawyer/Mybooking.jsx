@@ -5,8 +5,15 @@ import { motion } from 'framer-motion';
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import {
+  VideoCall as VideoCallIcon,
+  Message as MessageIcon,
+  Call as CallIcon,
+} from "@mui/icons-material";
 
 function Mybooking() {
+  const [actionedBookings, setActionedBookings] = useState({});
+
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,11 +50,37 @@ function Mybooking() {
   const currentItems = data.slice(indexOfFirstItem, indexOfLastItem);
 
   const getModeBadge = (mode) => {
-    if (mode === 'call') return <span className="badge badge-call">Call</span>;
-    if (mode === 'chat') return <span className="badge badge-chat">Chat</span>;
-    if (mode === 'video') return <span className="badge badge-video">Video Call</span>;
-    return <span className="badge badge-other">{mode}</span>;
-  };
+  if (mode === 'call') {
+    return (
+      <span className="badge badge-call">
+        <CallIcon fontSize="small" style={{ marginRight: 4 }} />
+        Call
+      </span>
+    );
+  }
+  if (mode === 'chat') {
+    return (
+      <span className="badge badge-chat">
+        <MessageIcon fontSize="small" style={{ marginRight: 4 }} />
+        Chat
+      </span>
+    );
+  }
+  if (mode === 'video') {
+    return (
+      <span className="badge badge-video">
+        <VideoCallIcon fontSize="small" style={{ marginRight: 4 }} />
+        Video Call
+      </span>
+    );
+  }
+  return (
+    <span className="badge badge-other">
+      {mode}
+    </span>
+  );
+};
+
 
   const handleStatusUpdate = async (_id, status) => {
     try {
@@ -103,7 +136,7 @@ function Mybooking() {
           <>
             <div className="table-responsive">
               <table className="booking-table">
-                <thead>
+                <thead className='haeding'>
                   <tr>
                     <th>S.No.</th>
                     <th>User Name</th>

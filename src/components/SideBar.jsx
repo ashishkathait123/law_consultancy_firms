@@ -181,6 +181,22 @@ const SideBar = () => {
                 <span>Billing</span>
               </Link>
             </li>
+
+             <li className="nav-item">
+              <Link className="nav-link" to="/Mybooking">
+                <FaMoneyBillWave size={20} />
+                <span>Booking</span>
+              </Link>
+            </li>
+
+            <li className="nav-item">
+              <Link className="nav-link" to="/lawyer/Lawyer_Profile.jsx">
+                <FaMoneyBillWave size={20} />
+                <span>Profile</span>
+              </Link>
+            </li>
+
+
           </>
         )}
 
@@ -222,24 +238,21 @@ const SideBar = () => {
               </Link>
             
             </li>
-            
+            <li className="nav-item">
+          <Link className="nav-link" to="/user/profile">
+            <i className="bi bi-person"></i>
+            <span>Profile</span>
+          </Link>
+        </li>
           </>
         )}
 
         {/* Common Bottom Items */}
         
         <li className="nav-item">
-          <Link className="nav-link" to="/userProfile">
-           <i className="bi bi-person-circle"></i>
-            <span>Profile</span>
-          </Link>
-        </li>
-
-         <li className="nav-item">
-          <Link className="nav-link" to="/Mybooking">
-          <i className="bi bi-calendar-check"></i>
-
-            <span>My Booking</span>
+          <Link className="nav-link" to="/help">
+            <i className="bi bi-question-circle"></i>
+            <span>Help</span>
           </Link>
         </li>
         <li className="nav-item">
