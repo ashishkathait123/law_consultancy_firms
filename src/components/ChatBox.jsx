@@ -1,51 +1,59 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
-import axios from 'axios';
 import { useAuth } from '../components/AuthContext';
+import './ChatBox.css';
 
 const ChatBox = ({ sessionToken, chatDuration, lawyer, bookingId }) => {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
   const [remainingTime, setRemainingTime] = useState(chatDuration * 60);
   const [sessionStatus, setSessionStatus] = useState('active');
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [socketConnected, setSocketConnected] = useState(false);
   const socketRef = useRef(null);
-  const fileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
   const auth = useAuth();
   const currentUser = auth?.currentUser;
 
-  const fileIcons = {
-    pdf: '📄',
-    docx: '📝',
-    doc: '📝',
-    png: '🖼️',
-    jpg: '🖼️',
-    jpeg: '🖼️',
-    txt: '📋'
-  };
-const VITE_CHAT_SERVER ="https://lawyerbackend-qrqa.onrender.com";
-  // Initialize socket connection
+  const SERVER_URL = "https://lawyerbackend-qrqa.onrender.com";
+
   useEffect(() => {
     if (!sessionToken || !currentUser || !bookingId) return;
 
-    socketRef.current = io(VITE_CHAT_SERVER, {
-      auth: { token: sessionToken },
-      query: {
-        userId: currentUser.id,
-        userType: 'client'
-      },
-      path: '/socket.io'
+    // Initialize socket connection
+    if (!window.socket) {
+      window.socket = io(SERVER_URL, {
+        auth: { token: sessionToken },
+        query: {
+          userId: currentUser.id,
+          userType: 'client',
+        },
+        path: '/socket.io',
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+      });
+    }
+
+    socketRef.current = window.socket;
+
+    // Connection handlers
+    socketRef.current.on('connect', () => {
+      setSocketConnected(true);
+      socketRef.current.emit('join-booking', bookingId);
     });
 
-    // Join booking room
-    socketRef.current.emit('join-booking', bookingId);
+    socketRef.current.on('disconnect', () => {
+      setSocketConnected(false);
+    });
 
-    // Listen for messages
-    socketRef.current.on('new-message', (newMessage) => {
-      setMessages(prev => [...prev, newMessage]);
+    socketRef.current.on('connect_error', (err) => {
+      console.error('Connection error:', err);
+      setSocketConnected(false);
+    });
+
+    // Message handlers
+    socketRef.current.on('new-message', (msg) => {
+      setMessages((prev) => [...prev, msg]);
       scrollToBottom();
     });
 
@@ -55,199 +63,167 @@ const VITE_CHAT_SERVER ="https://lawyerbackend-qrqa.onrender.com";
 
     socketRef.current.on('session-ended', () => {
       setSessionStatus('expired');
-      alert('Your chat session has ended.');
-    });
-
-    socketRef.current.on('connect_error', (err) => {
-      console.error('Connection error:', err);
-      alert('Connection to chat server failed');
     });
 
     return () => {
       if (socketRef.current) {
-        socketRef.current.disconnect();
+        socketRef.current.off('connect');
+        socketRef.current.off('disconnect');
+        socketRef.current.off('connect_error');
+        socketRef.current.off('new-message');
+        socketRef.current.off('session-time');
+        socketRef.current.off('session-ended');
       }
     };
-  }, [sessionToken, currentUser, chatDuration, bookingId]);
+  }, [sessionToken, currentUser, bookingId]);
 
-  // Timer countdown
   useEffect(() => {
-    if (remainingTime <= 0) {
-      setSessionStatus('expired');
-      return;
-    }
-
     const timer = setInterval(() => {
-      setRemainingTime(prev => Math.max(0, prev - 1));
+      setRemainingTime((prev) => Math.max(0, prev - 1));
     }, 1000);
-
     return () => clearInterval(timer);
-  }, [remainingTime]);
-
-  useEffect(() => {
-    if (remainingTime === 300) {
-      alert('Your chat session will expire in 5 minutes.');
-    } else if (remainingTime === 60) {
-      alert('Your chat session will expire in 1 minute.');
-    }
-  }, [remainingTime]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, []);
 
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (!message.trim() || sessionStatus !== 'active') return;
 
-    const newMessage = {
+    const msg = {
       id: uuidv4(),
       sender: currentUser.name,
       senderId: currentUser.id,
       content: message,
       type: 'text',
-      bookingId
+      bookingId,
+      timestamp: new Date().toISOString(),
     };
 
-    socketRef.current.emit('chat-message', newMessage);
-
-    setMessages(prev => [...prev, {
-      ...newMessage,
-      timestamp: new Date().toISOString()
-    }]);
-    setMessage('');
-    scrollToBottom();
-  };
-
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file || sessionStatus !== 'active') return;
-
-    const allowedTypes = [
-      'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/msword',
-      'image/png',
-      'image/jpeg',
-      'text/plain'
-    ];
-
-    if (!allowedTypes.includes(file.type)) {
-      alert('Invalid file type.');
-      return;
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-      alert('File size exceeds 10MB.');
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('sessionToken', sessionToken);
-    formData.append('userId', currentUser.id);
-
     try {
-      setIsUploading(true);
-      setUploadProgress(0);
-
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/upload`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${currentUser.token}`
-        },
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          );
-          setUploadProgress(percentCompleted);
-        }
-      });
-
-      const fileMessage = {
-        id: uuidv4(),
-        sender: currentUser.name,
-        senderId: currentUser.id,
-        content: response.data.fileName,
-        fileUrl: response.data.fileUrl,
-        fileType: response.data.fileType,
-        type: 'file',
-        bookingId
-      };
-
-      socketRef.current.emit('file-uploaded', fileMessage);
-
-      setMessages(prev => [...prev, {
-        ...fileMessage,
-        timestamp: new Date().toISOString()
-      }]);
+      socketRef.current?.emit('chat-message', msg);
+      setMessages((prev) => [...prev, msg]);
+      setMessage('');
       scrollToBottom();
     } catch (err) {
-      console.error('Upload failed:', err);
-      alert('File upload failed.');
-    } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
-      e.target.value = '';
+      console.error('Failed to send message:', err);
     }
+  };
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const formatTime = (secs) => {
+    const mins = Math.floor(secs / 60);
+    const seconds = secs % 60;
+    return `${mins}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
   const handleEndSession = () => {
-    if (window.confirm('End session?')) {
-      socketRef.current.emit('end-session', sessionToken);
+    if (window.confirm('Are you sure you want to end this session?')) {
+      socketRef.current?.emit('end-session', { sessionToken });
       setSessionStatus('expired');
     }
   };
 
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-  };
-
-  const getFileIcon = (fileName) => {
-    const ext = fileName.split('.').pop().toLowerCase();
-    return fileIcons[ext] || '📁';
-  };
-
   return (
-    <div className="chat-container">
-      <div className="chat-header">
-        <h4>Chat with {lawyer?.name}</h4>
-        <span>Time left: {formatTime(remainingTime)}</span>
-        <button onClick={handleEndSession}>End Session</button>
+    <div className="legal-chat-container">
+      {/* Connection status indicator */}
+      <div className={`connection-status ${socketConnected ? 'connected' : 'disconnected'}`}>
+        {socketConnected ? (
+          <span>✓ Connected</span>
+        ) : (
+          <span>⚠️ Connecting...</span>
+        )}
       </div>
 
-      <div className="chat-messages">
-        {messages.map(msg => (
-          <div key={msg.id} className={`chat-message ${msg.senderId === currentUser.id ? 'sent' : 'received'}`}>
-            <strong>{msg.sender}</strong>
-            {msg.type === 'text' ? (
-              <p>{msg.content}</p>
-            ) : (
-              <p>
-                {getFileIcon(msg.content)}{' '}
-                <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer">{msg.content}</a>
-              </p>
-            )}
+      {/* Chat header */}
+      <div className="legal-chat-header">
+        <div className="lawyer-profile">
+          <div className="lawyer-avatar">
+            {lawyer?.name?.charAt(0).toUpperCase()}
           </div>
-        ))}
+          <div className="lawyer-info">
+            <h3>Consultation with {lawyer?.name}</h3>
+            <p className="lawyer-title">{lawyer?.specialization || 'Attorney at Law'}</p>
+          </div>
+        </div>
+        
+        <div className="session-info">
+          <div className="session-timer">
+            <i className="icon-clock"></i> {formatTime(remainingTime)}
+          </div>
+          <div className={`session-status ${sessionStatus}`}>
+            {sessionStatus === 'active' ? 'Session Active' : 'Session Ended'}
+          </div>
+          {sessionStatus === 'active' && (
+            <button className="end-session-btn" onClick={handleEndSession}>
+              End Session
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Chat messages */}
+      <div className="legal-chat-messages">
+        {messages.length === 0 ? (
+          <div className="empty-chat">
+            <div className="empty-chat-icon">⚖️</div>
+            <h4>Your Secure Legal Consultation</h4>
+            <p>This is a private, encrypted conversation with your attorney.</p>
+            <p>All communications are confidential and protected by attorney-client privilege.</p>
+          </div>
+        ) : (
+          messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`legal-message ${msg.senderId === currentUser.id ? 'sent' : 'received'}`}
+            >
+              <div className="message-meta">
+                <span className="message-sender">{msg.sender}</span>
+                <span className="message-time">
+                  {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+              <div className="message-content">
+                {msg.content}
+              </div>
+            </div>
+          ))
+        )}
         <div ref={messagesEndRef}></div>
       </div>
 
-      <form onSubmit={handleSendMessage} className="chat-input">
-        <input
-          type="text"
-          value={message}
-          placeholder="Type a message..."
-          onChange={(e) => setMessage(e.target.value)}
-          disabled={sessionStatus !== 'active'}
-        />
-        <button type="submit">Send</button>
-        <input type="file" ref={fileInputRef} onChange={handleFileUpload} style={{ display: 'none' }} />
-        <button type="button" onClick={() => fileInputRef.current.click()}>📎</button>
-        {isUploading && <span>{uploadProgress}% uploading...</span>}
-      </form>
+      {/* Chat input */}
+      {sessionStatus === 'active' ? (
+        <form onSubmit={handleSendMessage} className="legal-chat-input">
+          <div className="input-container">
+            <input
+              type="text"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Type your message..."
+              disabled={!socketConnected}
+            />
+            <button 
+              type="submit" 
+              className="send-btn"
+              disabled={!message.trim() || !socketConnected}
+            >
+              Send
+            </button>
+          </div>
+          <div className="security-notice">
+            <i className="icon-lock"></i> Messages are encrypted and confidential
+          </div>
+        </form>
+      ) : (
+        <div className="session-ended">
+          <p>This consultation session has ended.</p>
+          <button className="request-new-session">
+            Request New Consultation
+          </button>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
 import ChatBox from '../../components/ChatBox';
-
+import { io } from 'socket.io-client';
+import { initSocket, getSocket } from '../../components/socket';
 const PaymentModal = ({ show, handleClose, serviceType, lawyer, onPaymentSuccess }) => {
   const [duration, setDuration] = useState(15);
   const [pricePerMinute, setPricePerMinute] = useState(10);
@@ -10,11 +11,14 @@ const PaymentModal = ({ show, handleClose, serviceType, lawyer, onPaymentSuccess
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [sessionToken, setSessionToken] = useState(null);
 
+  const [internalShow, setInternalShow] = useState(show);
+  // const socket = io('https://lawyerbackend-qrqa.onrender.com'); 
   const serviceDetails = {
     call: { price: 10, icon: 'fa-phone', color: '#0d6efd', name: 'Phone Call' },
     chat: { price: 5, icon: 'fa-comment-dots', color: '#198754', name: 'Chat' },
     video: { price: 15, icon: 'fa-video', color: '#dc3545', name: 'Video Call' }
   };
+
 
   useEffect(() => {
     const perMinute = serviceDetails[serviceType]?.price || 10;
@@ -22,14 +26,21 @@ const PaymentModal = ({ show, handleClose, serviceType, lawyer, onPaymentSuccess
     setTotal(duration * perMinute);
   }, [serviceType, duration]);
 
+  useEffect(() => {
+    setInternalShow(show);
+  }, [show]);
+
+  const handleHide = () => {
+    setInternalShow(false);
+    handleClose();
+  };
+
   const generateSessionToken = () => `session_${Math.random().toString(36).substring(2)}_${Date.now()}`;
 
-  const handlePaymentSuccess = async (response) => {
+const handlePaymentSuccess = async (response) => {
     const { razorpay_payment_id, razorpay_order_id, razorpay_signature, bookingId } = response;
-
-    console.log("✅ Razorpay Response:", response);
-
     const token = generateSessionToken();
+    const socket = getSocket();
     setSessionToken(token);
     setPaymentSuccess(true);
 
@@ -51,34 +62,54 @@ const PaymentModal = ({ show, handleClose, serviceType, lawyer, onPaymentSuccess
       });
 
       const responseText = await verifyRes.text();
-      console.log('🔍 Raw verification response:', responseText);
+      const verifyData = JSON.parse(responseText);
 
-      let verifyData;
-      try {
-        verifyData = JSON.parse(responseText);
-        console.log('✅ Parsed Payment verification:', verifyData);
-      } catch (parseErr) {
-        console.error('❌ Failed to parse verification JSON:', parseErr.message);
-        alert('Invalid server response. Please contact support.');
-        return;
-      }
+      if (!verifyData.error) {
+        const userData = JSON.parse(sessionStorage.getItem('userData'));
 
-      if (verifyData.error) {
-        console.error('❌ Payment verification error:', verifyData.message);
+        console.log('Socket:', socket);
+        console.log('User Data:', userData);
+
+        if (socket && userData) {
+          console.log('hello', socket.id)
+          console.log('hillo')
+          socket.emit('join-user', userData.userId);
+          socket.emit('join-lawyer', verifyData.booking.lawyerId);
+          socket.emit('join-booking', verifyData.booking._id);
+
+          socket.emit('new-booking-notification', {
+            bookingId: verifyData.booking._id,
+            userId: userData.userId,
+            userName: userData.name || 'User',
+            lawyerId: verifyData.booking.lawyerId,
+            mode: serviceType,
+            amount: verifyData.booking.amount,
+            createdAt: verifyData.booking.createdAt
+          }, (res) => {
+            if (res?.status === 'success') {
+              console.log('Notification sent successfully.');
+            } else {
+              console.error('Notification failed.', res);
+            }
+          });
+
+          socket.emit('user-started-chat', {
+            userId: userData.userId,
+            lawyerId: verifyData.booking.lawyerId,
+            bookingId: verifyData.booking._id,
+            mode: serviceType
+          });
+        }
+
+        if (onPaymentSuccess) {
+          onPaymentSuccess({ sessionToken: token, durationMinutes: duration, paymentId: razorpay_payment_id });
+        }
+      } else {
         alert(`Payment verification failed: ${verifyData.message}`);
-        return;
-      }
-
-      if (onPaymentSuccess) {
-        onPaymentSuccess({
-          sessionToken: token,
-          durationMinutes: duration,
-          paymentId: razorpay_payment_id
-        });
       }
 
     } catch (err) {
-      console.error('❌ Payment verification failed:', err);
+      console.error('Verification Error:', err);
       alert('Payment succeeded but verification failed.');
     }
   };
@@ -102,13 +133,11 @@ const PaymentModal = ({ show, handleClose, serviceType, lawyer, onPaymentSuccess
       });
 
       const orderData = await orderRes.json();
-      console.log('📦 Order created:', orderData);
-
       const razorpayOrderId = orderData?.order?.id;
       const bookingId = orderData?.booking?._id;
 
       if (!razorpayOrderId || !bookingId) {
-        alert("Failed to create order. Try again.");
+        alert("Failed to create order.");
         return;
       }
 
@@ -144,15 +173,16 @@ const PaymentModal = ({ show, handleClose, serviceType, lawyer, onPaymentSuccess
 
     } catch (error) {
       console.error("Payment error:", error);
-      alert("Something went wrong while initializing payment.");
+      alert("Payment initialization failed.");
     } finally {
       setLoading(false);
     }
   };
 
-  if (paymentSuccess && serviceType === 'chat') {
+  // Show ChatBox if chat session started
+  if (paymentSuccess && sessionToken && serviceType === 'chat') {
     return (
-      <Modal show={show} onHide={handleClose} centered size="lg" fullscreen="md-down">
+      <Modal show={internalShow} onHide={handleHide} centered size="lg" fullscreen="md-down">
         <Modal.Header closeButton style={{ background: '#1E4D7A', color: 'white' }}>
           <Modal.Title>
             <i className={`fas ${serviceDetails[serviceType]?.icon} me-2`}></i>
@@ -166,8 +196,9 @@ const PaymentModal = ({ show, handleClose, serviceType, lawyer, onPaymentSuccess
     );
   }
 
+  // Payment form
   return (
-    <Modal show={show} onHide={handleClose} centered>
+    <Modal show={internalShow} onHide={handleHide} centered>
       <Modal.Header closeButton style={{ background: '#1E4D7A', color: 'white' }}>
         <Modal.Title>
           <i className={`fas ${serviceDetails[serviceType]?.icon} me-2`}></i>
@@ -230,7 +261,7 @@ const PaymentModal = ({ show, handleClose, serviceType, lawyer, onPaymentSuccess
         </Form>
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="outline-secondary" onClick={handleClose} style={{ borderRadius: '20px', padding: '8px 20px' }}>
+        <Button variant="outline-secondary" onClick={handleHide} style={{ borderRadius: '20px', padding: '8px 20px' }}>
           Cancel
         </Button>
         <Button
@@ -257,6 +288,6 @@ const PaymentModal = ({ show, handleClose, serviceType, lawyer, onPaymentSuccess
       </Modal.Footer>
     </Modal>
   );
-}; 
+};
 
 export default PaymentModal;
