@@ -4,14 +4,17 @@
 .sidebar {
   position: fixed;
   top: 79px;
+
+  
+
   left: 0px;
+
   bottom: 0;
   width: 250px;
   z-index: 9999;
   padding: 20px 15px;
   overflow-y: auto;
   background: #1E4D7A;
-
 
   /* border-radius: 16px; */
   color: #ffffff;

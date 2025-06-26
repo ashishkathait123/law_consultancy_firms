@@ -181,6 +181,22 @@ const SideBar = () => {
                 <span>Billing</span>
               </Link>
             </li>
+
+             <li className="nav-item">
+              <Link className="nav-link" to="/Mybooking">
+                <FaMoneyBillWave size={20} />
+                <span>Booking</span>
+              </Link>
+            </li>
+
+            <li className="nav-item">
+              <Link className="nav-link" to="/lawyer/Lawyer_Profile.jsx">
+                <FaMoneyBillWave size={20} />
+                <span>Profile</span>
+              </Link>
+            </li>
+
+
           </>
         )}
 
