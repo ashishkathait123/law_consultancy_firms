@@ -18,9 +18,7 @@ const stateCityOptions = {
   "Karnataka": ["Bengaluru", "Mysuru", "Hubli"]
 };
 
-
 const FindLawyer = () => {
-  const token = sessionStorage.getItem('token');
   const [lawyers, setLawyers] = useState([]);
   const [filteredLawyers, setFilteredLawyers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,14 +27,9 @@ const FindLawyer = () => {
     state: '',
     city: ''
   });
-    
+
   const [selectedLawyer, setSelectedLawyer] = useState(null);
   const [showModal, setShowModal] = useState(false);
-
-  // this is the post api
-
-
-
 
 const handleViewProfile = (lawyer) => {
     setSelectedLawyer(lawyer);
@@ -48,7 +41,6 @@ const handleViewProfile = (lawyer) => {
     const fetchLawyers = async () => {
       try {
         const res = await axios.get('https://lawyerbackend-qrqa.onrender.com/lawapi/common/lwayerlist');
-        console.log("lsdfg",res);
         if (res.data && Array.isArray(res.data.data)) {
           const allLawyers = res.data.data;
           setLawyers(allLawyers);
