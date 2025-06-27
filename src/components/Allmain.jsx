@@ -14,6 +14,8 @@ import CustomerManagement from "../Pages/Admin/CustomerManagement.jsx";
 import ClientProfile from "../Pages/user/Profile.jsx";
 import FindLawyer from "../Pages/user/FindLawyer.jsx";
 import CaseHistory from "../Pages/user/CaseHistory.jsx";
+import UserHistory from "../Pages/Admin/UserHistory.jsx";
+import LawyerHistory from "../Pages/Admin/LawyerHistory.jsx";
 import "./main.css";
 
 const Allmain = () => {
@@ -30,6 +32,8 @@ const Allmain = () => {
       "/user/profile": "Manage profile",
       "/user/FindLawyer": "Find Lawyer",
       "/user/CaseHistory": "Case History",
+      "/lawyer/history":"Lawyer History",
+       "/user/history":"User History"
     };
 
     const title = routeToTitle[location.pathname];
@@ -58,6 +62,8 @@ style={{ background: "#f9f7f1", minHeight: "100vh" }}
           <Route path="/user/profile" element={<AuthRoute> <ClientProfile /> </AuthRoute>} />
           <Route path="/user/FindLawyer" element={<AuthRoute> <FindLawyer /> </AuthRoute>} />
           <Route path="/user/CaseHistory" element={<AuthRoute> <CaseHistory /> </AuthRoute>} />
+          <Route path="/lawyer/history" element={<AuthRoute> <LawyerHistory/> </AuthRoute>} />
+           <Route path="/user/history" element={<AuthRoute> <UserHistory/> </AuthRoute>} />
           <Route path="/logout" element={<Logout />} />
         </Routes>
       </main>

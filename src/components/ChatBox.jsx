@@ -3,6 +3,7 @@ import { io } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from '../components/AuthContext';
 import './ChatBox.css';
+import { initSocket, getSocket } from '../components/socket';
 
 const ChatBox = ({ sessionToken, chatDuration, lawyer, bookingId }) => {
   const [messages, setMessages] = useState([]);
@@ -18,64 +19,51 @@ const ChatBox = ({ sessionToken, chatDuration, lawyer, bookingId }) => {
   const SERVER_URL = "https://lawyerbackend-qrqa.onrender.com";
 
   useEffect(() => {
-    if (!sessionToken || !currentUser || !bookingId) return;
+  if (!sessionToken || !currentUser || !bookingId) return;
 
-    // Initialize socket connection
-    if (!window.socket) {
-      window.socket = io(SERVER_URL, {
-        auth: { token: sessionToken },
-        query: {
-          userId: currentUser.id,
-          userType: 'client',
-        },
-        path: '/socket.io',
-        reconnectionAttempts: 5,
-        reconnectionDelay: 1000,
-      });
-    }
+  // ✅ Initialize socket using shared socket.js method
+  const socket = initSocket(sessionToken, currentUser.id, 'client');
+  socketRef.current = socket;
 
-    socketRef.current = window.socket;
+  // ✅ Connection handlers
+  socket.on('connect', () => {
+    setSocketConnected(true);
+    socket.emit('join-booking', bookingId);
+  });
 
-    // Connection handlers
-    socketRef.current.on('connect', () => {
-      setSocketConnected(true);
-      socketRef.current.emit('join-booking', bookingId);
-    });
+  socket.on('disconnect', () => {
+    setSocketConnected(false);
+  });
 
-    socketRef.current.on('disconnect', () => {
-      setSocketConnected(false);
-    });
+  socket.on('connect_error', (err) => {
+    console.error('Connection error:', err);
+    setSocketConnected(false);
+  });
 
-    socketRef.current.on('connect_error', (err) => {
-      console.error('Connection error:', err);
-      setSocketConnected(false);
-    });
+  // ✅ Message handlers
+  socket.on('new-message', (msg) => {
+    setMessages((prev) => [...prev, msg]);
+    scrollToBottom();
+  });
 
-    // Message handlers
-    socketRef.current.on('new-message', (msg) => {
-      setMessages((prev) => [...prev, msg]);
-      scrollToBottom();
-    });
+  socket.on('session-time', ({ remaining }) => {
+    setRemainingTime(remaining);
+  });
 
-    socketRef.current.on('session-time', ({ remaining }) => {
-      setRemainingTime(remaining);
-    });
+  socket.on('session-ended', () => {
+    setSessionStatus('expired');
+  });
 
-    socketRef.current.on('session-ended', () => {
-      setSessionStatus('expired');
-    });
-
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.off('connect');
-        socketRef.current.off('disconnect');
-        socketRef.current.off('connect_error');
-        socketRef.current.off('new-message');
-        socketRef.current.off('session-time');
-        socketRef.current.off('session-ended');
-      }
-    };
-  }, [sessionToken, currentUser, bookingId]);
+  // ✅ Cleanup on unmount
+  return () => {
+    socket.off('connect');
+    socket.off('disconnect');
+    socket.off('connect_error');
+    socket.off('new-message');
+    socket.off('session-time');
+    socket.off('session-ended');
+  };
+}, [sessionToken, currentUser, bookingId]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -194,7 +182,7 @@ const ChatBox = ({ sessionToken, chatDuration, lawyer, bookingId }) => {
       </div>
 
       {/* Chat input */}
-      {sessionStatus === 'active' ? (
+      {sessionStatus === 'active' ||"" ? (
         <form onSubmit={handleSendMessage} className="legal-chat-input">
           <div className="input-container">
             <input

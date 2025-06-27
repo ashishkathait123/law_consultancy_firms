@@ -1,227 +1,290 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { FaUserTie, FaClock, FaMoneyBillWave, FaPhone, FaVideo, FaComments } from 'react-icons/fa';
+import {
+  Container,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  CircularProgress,
+  Chip,
+  Avatar,
+  Box
+} from '@mui/material';
+import { styled } from '@mui/system';
+import { CalendarToday, Schedule, Payment, Person, Info } from '@mui/icons-material';
 
-const CaseHistory = () => {
+const apiUrl = 'https://lawyerbackend-qrqa.onrender.com/lawapi/common/lawyerbooking';
+
+const StatusChip = styled(Chip)(({ theme, status }) => ({
+  backgroundColor: 
+    status === 'completed' ? theme.palette.success.light :
+    status === 'pending' ? theme.palette.warning.light :
+    status === 'cancelled' ? theme.palette.error.light :
+    theme.palette.info.light,
+  color: theme.palette.getContrastText(
+    status === 'completed' ? theme.palette.success.light :
+    status === 'pending' ? theme.palette.warning.light :
+    status === 'cancelled' ? theme.palette.error.light :
+    theme.palette.info.light
+  ),
+  fontWeight: 'bold'
+}));
+
+const MyCases = () => {
   const [cases, setCases] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [filter, setFilter] = useState('all');
-  const API_BASE = 'https://lawyerbackend-qrqa.onrender.com/lawapi';
+  const [selectedCase, setSelectedCase] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchCaseHistory = async () => {
+    const fetchCases = async () => {
       try {
-        const token = sessionStorage.getItem('token');
-        const user = JSON.parse(sessionStorage.getItem('userData'));
-
-        if (!user?._id) {
-          throw new Error("User ID not found in session");
-        }
-
-        const response = await axios.get(`${API_BASE}/client/cases/${user._id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        setCases(response.data.data || []);
-      } catch (error) {
-        console.error('Error fetching case history:', error);
-        toast.error(error.message || 'Error loading case history');
-      } finally {
-        setIsLoading(false);
+        // In a real app, you would include authentication headers
+        const response = await axios.get(apiUrl);
+        setCases(response.data);
+        setLoading(false);
+      } catch (err) {
+        setError('Failed to fetch cases. Please try again later.');
+        setLoading(false);
+        console.error('Error fetching cases:', err);
       }
     };
 
-    fetchCaseHistory();
+    fetchCases();
   }, []);
 
-  const filteredCases = filter === 'all' 
-    ? cases 
-    : cases.filter(caseItem => caseItem.status === filter);
+  const handleCaseClick = (caseItem) => {
+    setSelectedCase(caseItem);
+    setOpenDialog(true);
+  };
 
-  const getMediumIcon = (medium) => {
-    switch (medium) {
-      case 'call': return <FaPhone className="text-primary" />;
-      case 'video': return <FaVideo className="text-danger" />;
-      case 'chat': return <FaComments className="text-success" />;
-      default: return <FaPhone className="text-primary" />;
-    }
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
   };
 
   const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-    return new Date(dateString).toLocaleDateString('en-US', options);
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  if (isLoading) {
+  const formatTime = (timeString) => {
+    return new Date(timeString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center min-vh-80">
-        <div className="spinner-border text-primary" style={{ width: '3rem', height: '3rem' }} role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-      </div>
+      <Container maxWidth="lg" sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+        <CircularProgress size={60} />
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Typography variant="h5" color="error" align="center">
+          {error}
+        </Typography>
+      </Container>
     );
   }
 
   return (
-    <div className="container-fluid py-4 px-3 px-md-5">
-      <ToastContainer position="top-center" autoClose={3000} />
-      <div className="row justify-content-center">
-        <div className="col-12 col-lg-10 col-xl-8">
-          <div className="card shadow-sm border-0">
-            <div className="card-header bg-primary text-white py-3">
-              <div className="d-flex justify-content-between align-items-center">
-                <h2 className="h4 mb-0">
-                  <i className="fas fa-history me-2"></i>
-                  My Case History
-                </h2>
-                <div className="btn-group">
-                  <button 
-                    className={`btn btn-sm ${filter === 'all' ? 'btn-light' : 'btn-outline-light'}`}
-                    onClick={() => setFilter('all')}
-                  >
-                    All
-                  </button>
-                  <button 
-                    className={`btn btn-sm ${filter === 'completed' ? 'btn-light' : 'btn-outline-light'}`}
-                    onClick={() => setFilter('completed')}
-                  >
-                    Completed
-                  </button>
-                  <button 
-                    className={`btn btn-sm ${filter === 'ongoing' ? 'btn-light' : 'btn-outline-light'}`}
-                    onClick={() => setFilter('ongoing')}
-                  >
-                    Ongoing
-                  </button>
-                </div>
-              </div>
-            </div>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: '#2c3e50', mb: 4 }}>
+        My Legal Cases
+      </Typography>
 
-            <div className="card-body p-0">
-              {filteredCases.length > 0 ? (
-                <div className="list-group list-group-flush">
-                  {filteredCases.map((caseItem, index) => (
-                    <div key={index} className="list-group-item p-3 p-md-4 border-bottom">
-                      <div className="d-flex justify-content-between align-items-start mb-2">
-                        <h5 className="mb-1 text-primary">{caseItem.caseName || 'Legal Consultation'}</h5>
-                        <span className={`badge ${caseItem.status === 'completed' ? 'bg-success' : 'bg-warning'}`}>
-                          {caseItem.status === 'completed' ? 'Completed' : 'Ongoing'}
-                        </span>
-                      </div>
-                      
-                      <div className="d-flex align-items-center mb-2">
-                        <FaUserTie className="me-2 text-muted" />
-                        <span className="text-muted">Lawyer:</span>
-                        <span className="ms-2 fw-medium">{caseItem.lawyer?.name || 'Not specified'}</span>
-                      </div>
-                      
-                      <div className="row g-3">
-                        <div className="col-md-6">
-                          <div className="d-flex align-items-center">
-                            <FaClock className="me-2 text-muted" />
-                            <div>
-                              <small className="text-muted">Consultation Time</small>
-                              <div>{formatDate(caseItem.consultationTime)}</div>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="col-md-6">
-                          <div className="d-flex align-items-center">
-                            {getMediumIcon(caseItem.consultationMedium)}
-                            <div className="ms-2">
-                              <small className="text-muted">Consultation Medium</small>
-                              <div className="text-capitalize">{caseItem.consultationMedium || 'call'}</div>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="col-md-6">
-                          <div className="d-flex align-items-center">
-                            <FaMoneyBillWave className="me-2 text-muted" />
-                            <div>
-                              <small className="text-muted">Payment</small>
-                              <div>₹{caseItem.paymentAmount || '0'}</div>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="col-md-6">
-                          <div className="d-flex align-items-center">
-                            <i className="fas fa-file-alt me-2 text-muted"></i>
-                            <div>
-                              <small className="text-muted">Case ID</small>
-                              <div>{caseItem.caseId || 'N/A'}</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {caseItem.notes && (
-                        <div className="mt-3">
-                          <small className="text-muted">Notes:</small>
-                          <div className="bg-light p-2 rounded">{caseItem.notes}</div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-5">
-                  <i className="fas fa-folder-open fa-3x text-muted mb-3"></i>
-                  <h5>No cases found</h5>
-                  <p className="text-muted">Your case history will appear here once you have consultations</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      {cases.length === 0 ? (
+        <Paper elevation={3} sx={{ p: 4, textAlign: 'center' }}>
+          <Typography variant="h6" color="textSecondary">
+            You don't have any active cases yet.
+          </Typography>
+        </Paper>
+      ) : (
+        <TableContainer component={Paper} elevation={3}>
+          <Table>
+            <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 'bold' }}>Lawyer</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Case Type</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Consultation</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Action</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {cases.map((caseItem) => (
+                <TableRow key={caseItem.id} hover>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Avatar 
+                        src={caseItem.lawyer?.profileImage} 
+                        alt={caseItem.lawyer?.name}
+                        sx={{ mr: 2 }}
+                      />
+                      <Typography variant="body1">{caseItem.lawyer?.name}</Typography>
+                    </Box>
+                  </TableCell>
+                  <TableCell>{caseItem.caseType || 'General Consultation'}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={caseItem.modeOfConsultation || 'Video'}
+                      color={caseItem.modeOfConsultation === 'Video' ? 'primary' : 'secondary'}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    {formatDate(caseItem.bookingDate)} at {formatTime(caseItem.bookingTime)}
+                  </TableCell>
+                  <TableCell>
+                    <StatusChip 
+                      label={caseItem.status || 'pending'} 
+                      status={caseItem.status?.toLowerCase() || 'pending'} 
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      size="small"
+                      startIcon={<Info />}
+                      onClick={() => handleCaseClick(caseItem)}
+                    >
+                      Details
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
-      <style jsx>{`
-        .list-group-item {
-          transition: all 0.3s ease;
-        }
-        
-        .list-group-item:hover {
-          background-color: #f8f9fa;
-        }
-        
-        .badge {
-          font-size: 0.75rem;
-          padding: 0.35em 0.65em;
-          font-weight: 500;
-        }
-        
-        @media (max-width: 767.98px) {
-          .card-header {
-            flex-direction: column;
-            align-items: flex-start;
-          }
-          
-          .btn-group {
-            margin-top: 10px;
-            align-self: flex-end;
-          }
-        }
-        
-        @media (max-width: 575.98px) {
-          .container-fluid {
-            padding-left: 15px;
-            padding-right: 15px;
-          }
-          
-          .col-md-6 {
-            margin-bottom: 15px;
-          }
-        }
-      `}</style>
-    </div>
+      {/* Case Details Dialog */}
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
+        {selectedCase && (
+          <>
+            <DialogTitle sx={{ backgroundColor: '#2c3e50', color: 'white' }}>
+              Case Details: {selectedCase.caseType || 'General Consultation'}
+            </DialogTitle>
+            <DialogContent dividers sx={{ py: 3 }}>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Person sx={{ mr: 1, color: '#2c3e50' }} /> Lawyer Information
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Avatar 
+                    src={selectedCase.lawyer?.profileImage} 
+                    alt={selectedCase.lawyer?.name}
+                    sx={{ width: 60, height: 60, mr: 2 }}
+                  />
+                  <Box>
+                    <Typography variant="h6">{selectedCase.lawyer?.name}</Typography>
+                    <Typography variant="body2" color="textSecondary">
+                      {selectedCase.lawyer?.specialization || 'General Practice'}
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary">
+                      {selectedCase.lawyer?.yearsOfExperience || '5'} years of experience
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                  <CalendarToday sx={{ mr: 1, color: '#2c3e50' }} /> Appointment Details
+                </Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 2 }}>
+                  <Box>
+                    <Typography variant="subtitle2" color="textSecondary">Date</Typography>
+                    <Typography>{formatDate(selectedCase.bookingDate)}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="subtitle2" color="textSecondary">Time</Typography>
+                    <Typography>{formatTime(selectedCase.bookingTime)}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="subtitle2" color="textSecondary">Duration</Typography>
+                    <Typography>{selectedCase.duration || '30'} minutes</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="subtitle2" color="textSecondary">Consultation Mode</Typography>
+                    <Chip
+                      label={selectedCase.modeOfConsultation || 'Video'}
+                      color={selectedCase.modeOfConsultation === 'Video' ? 'primary' : 'secondary'}
+                    />
+                  </Box>
+                </Box>
+              </Box>
+
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Payment sx={{ mr: 1, color: '#2c3e50' }} /> Payment Information
+                </Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 2 }}>
+                  <Box>
+                    <Typography variant="subtitle2" color="textSecondary">Amount</Typography>
+                    <Typography>${selectedCase.transaction?.amount || '150'}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="subtitle2" color="textSecondary">Payment Status</Typography>
+                    <StatusChip 
+                      label={selectedCase.transaction?.status || 'completed'} 
+                      status={selectedCase.transaction?.status?.toLowerCase() || 'completed'} 
+                    />
+                  </Box>
+                  <Box>
+                    <Typography variant="subtitle2" color="textSecondary">Payment Method</Typography>
+                    <Typography>{selectedCase.transaction?.method || 'Credit Card'}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="subtitle2" color="textSecondary">Transaction ID</Typography>
+                    <Typography>{selectedCase.transaction?.id || 'TRX-123456'}</Typography>
+                  </Box>
+                </Box>
+              </Box>
+
+              <Box>
+                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Schedule sx={{ mr: 1, color: '#2c3e50' }} /> Case Notes
+                </Typography>
+                {selectedCase.notes ? (
+                  <Paper elevation={0} sx={{ p: 2, backgroundColor: '#f9f9f9', borderRadius: 1 }}>
+                    <Typography>{selectedCase.notes}</Typography>
+                  </Paper>
+                ) : (
+                  <Typography color="textSecondary">No additional notes provided.</Typography>
+                )}
+              </Box>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, py: 2 }}>
+              <Button 
+                onClick={handleCloseDialog} 
+                color="primary" 
+                variant="contained"
+                sx={{ backgroundColor: '#2c3e50', '&:hover': { backgroundColor: '#1a252f' } }}
+              >
+                Close
+              </Button>
+            </DialogActions>
+          </>
+        )}
+      </Dialog>
+    </Container>
   );
 };
 
-export default CaseHistory;
+export default MyCases;

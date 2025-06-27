@@ -19,17 +19,22 @@ import { IoGridOutline } from "react-icons/io5";
 import { MdOutlineProductionQuantityLimits, MdOutlineCategory } from "react-icons/md";
 import { RiBriefcase4Fill, RiFileList3Fill } from "react-icons/ri";
 import { PiChalkboardTeacherFill, PiStudentBold } from "react-icons/pi";
+import { BiChevronDown, BiChevronUp } from "react-icons/bi";
 
 const SideBar = () => {
   const [dropdowns, setDropdowns] = useState({
     cases: false,
     clients: false,
     documents: false,
-    billing: false
+    billing: false,
+    history: false
   });
 
   const toggleDropdown = (name) => {
-    setDropdowns({ ...dropdowns, [name]: !dropdowns[name] });
+    setDropdowns(prev => ({
+      ...prev,
+      [name]: !prev[name]
+    }));
   };
 
   const role = sessionStorage.getItem("role");
@@ -37,13 +42,6 @@ const SideBar = () => {
   return (
     <aside id="sidebar" className="sidebar">
       <ul className="sidebar-nav" id="sidebar-nav">
-        {/* Common Items for All Roles */}
-        {/* <li className="nav-item">
-          <Link className="nav-link" to="/dashboard">
-            <IoGridOutline size={20} />
-            <span>Dashboard</span>
-          </Link>
-        </li> */}
 
         {/* Admin Specific Items */}
         {role === "admin" && (
@@ -62,33 +60,35 @@ const SideBar = () => {
             </li>
 
             <li className="nav-item">
-              <a 
-                className={`nav-link ${dropdowns.cases ? '' : 'collapsed'}`} 
-                onClick={() => toggleDropdown('cases')}
+              <div
+                className={`nav-link ${dropdowns.cases ? "" : "collapsed"}`}
+                onClick={() => toggleDropdown("cases")}
+                style={{ cursor: "pointer" }}
               >
                 <RiBriefcase4Fill size={20} />
                 <span>Case Management</span>
-                <i className={`bi bi-chevron-${dropdowns.cases ? 'up' : 'down'}`}></i>
-              </a>
-              <ul className={`nav-content ${dropdowns.cases ? 'show' : ''}`}>
-                <li>
-                  <Link to="/cases/all">
-                    <i className="bi bi-circle"></i>
-                    <span>All Cases</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/cases/active">
-                    <i className="bi bi-circle"></i>
-                    <span>Active Cases</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/cases/closed">
-                    <i className="bi bi-circle"></i>
-                    <span>Closed Cases</span>
-                  </Link>
-                </li>
+                {dropdowns.cases ? <BiChevronUp size={20} /> : <BiChevronDown size={20} />}
+              </div>
+              <ul className={`nav-content collapse ${dropdowns.cases ? "show" : ""}`}>
+                <li><Link to="/cases/all"><i className="bi bi-circle" /> All Cases</Link></li>
+                <li><Link to="/cases/active"><i className="bi bi-circle" /> Active Cases</Link></li>
+                <li><Link to="/cases/closed"><i className="bi bi-circle" /> Closed Cases</Link></li>
+              </ul>
+            </li>
+
+            <li className="nav-item">
+              <div
+                className={`nav-link ${dropdowns.history ? "" : "collapsed"}`}
+                onClick={() => toggleDropdown("history")}
+                style={{ cursor: "pointer" }}
+              >
+                <RiBriefcase4Fill size={20} />
+                <span>History</span>
+                {dropdowns.history ? <BiChevronUp size={20} /> : <BiChevronDown size={20} />}
+              </div>
+              <ul className={`nav-content collapse ${dropdowns.history ? "show" : ""}`}>
+                <li><Link to="/lawyer/history"><i className="bi bi-circle" /> Lawyer History</Link></li>
+                <li><Link to="/user/history"><i className="bi bi-circle" /> User History</Link></li>
               </ul>
             </li>
 
@@ -112,27 +112,18 @@ const SideBar = () => {
         {role === "lawyer" && (
           <>
             <li className="nav-item">
-              <a 
-                className={`nav-link ${dropdowns.clients ? '' : 'collapsed'}`} 
-                onClick={() => toggleDropdown('clients')}
+              <div
+                className={`nav-link ${dropdowns.clients ? "" : "collapsed"}`}
+                onClick={() => toggleDropdown("clients")}
+                style={{ cursor: "pointer" }}
               >
                 <FaUserTie size={20} />
                 <span>Clients</span>
-                <i className={`bi bi-chevron-${dropdowns.clients ? 'up' : 'down'}`}></i>
-              </a>
-              <ul className={`nav-content ${dropdowns.clients ? 'show' : ''}`}>
-                <li>
-                  <Link to="/clients/all">
-                    <i className="bi bi-circle"></i>
-                    <span>All Clients</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/clients/add">
-                    <i className="bi bi-circle"></i>
-                    <span>Add New Client</span>
-                  </Link>
-                </li>
+                {dropdowns.clients ? <BiChevronUp size={20} /> : <BiChevronDown size={20} />}
+              </div>
+              <ul className={`nav-content collapse ${dropdowns.clients ? "show" : ""}`}>
+                <li><Link to="/clients/all"><i className="bi bi-circle" /> All Clients</Link></li>
+                <li><Link to="/clients/add"><i className="bi bi-circle" /> Add New Client</Link></li>
               </ul>
             </li>
 
@@ -144,27 +135,18 @@ const SideBar = () => {
             </li>
 
             <li className="nav-item">
-              <a 
-                className={`nav-link ${dropdowns.documents ? '' : 'collapsed'}`} 
-                onClick={() => toggleDropdown('documents')}
+              <div
+                className={`nav-link ${dropdowns.documents ? "" : "collapsed"}`}
+                onClick={() => toggleDropdown("documents")}
+                style={{ cursor: "pointer" }}
               >
                 <RiFileList3Fill size={20} />
                 <span>Documents</span>
-                <i className={`bi bi-chevron-${dropdowns.documents ? 'up' : 'down'}`}></i>
-              </a>
-              <ul className={`nav-content ${dropdowns.documents ? 'show' : ''}`}>
-                <li>
-                  <Link to="/documents/templates">
-                    <i className="bi bi-circle"></i>
-                    <span>Templates</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/documents/upload">
-                    <i className="bi bi-circle"></i>
-                    <span>Upload Documents</span>
-                  </Link>
-                </li>
+                {dropdowns.documents ? <BiChevronUp size={20} /> : <BiChevronDown size={20} />}
+              </div>
+              <ul className={`nav-content collapse ${dropdowns.documents ? "show" : ""}`}>
+                <li><Link to="/documents/templates"><i className="bi bi-circle" /> Templates</Link></li>
+                <li><Link to="/documents/upload"><i className="bi bi-circle" /> Upload Documents</Link></li>
               </ul>
             </li>
 
@@ -179,6 +161,20 @@ const SideBar = () => {
               <Link className="nav-link" to="/billing">
                 <FaMoneyBillWave size={20} />
                 <span>Billing</span>
+              </Link>
+            </li>
+
+            <li className="nav-item">
+              <Link className="nav-link" to="/Mybooking">
+                <FaMoneyBillWave size={20} />
+                <span>Booking</span>
+              </Link>
+            </li>
+
+            <li className="nav-item">
+              <Link className="nav-link" to="/lawyer/Lawyer_Profile">
+                <FaUserTie size={20} />
+                <span>Profile</span>
               </Link>
             </li>
           </>
@@ -220,31 +216,32 @@ const SideBar = () => {
                 <FaGavel size={20} />
                 <span>Find a Lawyer</span>
               </Link>
-            
             </li>
+
             <li className="nav-item">
-          <Link className="nav-link" to="/user/profile">
-            <i className="bi bi-person"></i>
-            <span>Profile</span>
-          </Link>
-        </li>
+              <Link className="nav-link" to="/user/profile">
+                <FaUserTie size={20} />
+                <span>Profile</span>
+              </Link>
+            </li>
           </>
         )}
 
-        {/* Common Bottom Items */}
-        
+        {/* Common Items */}
         <li className="nav-item">
           <Link className="nav-link" to="/help">
-            <i className="bi bi-question-circle"></i>
+            <i className="bi bi-question-circle" />
             <span>Help</span>
           </Link>
         </li>
+
         <li className="nav-item">
           <Link className="nav-link" to="/logout">
-<i className="fas fa-sign-out-alt"></i>
+            <i className="fas fa-sign-out-alt" />
             <span>Log Out</span>
           </Link>
         </li>
+
       </ul>
     </aside>
   );
