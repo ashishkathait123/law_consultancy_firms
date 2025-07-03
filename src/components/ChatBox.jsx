@@ -1,76 +1,82 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { io } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from '../components/AuthContext';
 import './ChatBox.css';
-import { initSocket, getSocket } from '../components/socket';
+import { initSocket } from '../components/socket';
 
 const ChatBox = ({ sessionToken, chatDuration, lawyer, bookingId }) => {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
   const [remainingTime, setRemainingTime] = useState(chatDuration * 60);
-  const [sessionStatus, setSessionStatus] = useState('active');
+  const [sessionStatus, setSessionStatus] = useState('waiting'); // waiting | active | expired
   const [socketConnected, setSocketConnected] = useState(false);
+
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
   const auth = useAuth();
   const currentUser = auth?.currentUser;
 
-  const SERVER_URL = "https://lawyerbackend-qrqa.onrender.com";
-
   useEffect(() => {
-  if (!sessionToken || !currentUser || !bookingId) return;
+    if (!sessionToken || !currentUser || !bookingId) return;
 
-  // ✅ Initialize socket using shared socket.js method
-  const socket = initSocket(sessionToken, currentUser.id, 'client');
-  socketRef.current = socket;
+    const socket = initSocket(sessionToken, currentUser.id, 'client');
+    socketRef.current = socket;
 
-  // ✅ Connection handlers
-  socket.on('connect', () => {
-    setSocketConnected(true);
-    socket.emit('join-booking', bookingId);
-  });
+    socket.on('connect', () => {
+      setSocketConnected(true);
+      socket.emit('join-booking', bookingId);
+    });
 
-  socket.on('disconnect', () => {
-    setSocketConnected(false);
-  });
+    socket.on('disconnect', () => setSocketConnected(false));
+    socket.on('connect_error', (err) => {
+      console.error('Socket connection error:', err);
+      setSocketConnected(false);
+    });
 
-  socket.on('connect_error', (err) => {
-    console.error('Connection error:', err);
-    setSocketConnected(false);
-  });
+    socket.on('session-started', (data) => {
+      if (data.bookingId === bookingId) {
+        setSessionStatus('active');
+        setRemainingTime(data.duration || chatDuration * 60);
+        console.log('✅ session-started received:', data);
+      }
+    });
 
-  // ✅ Message handlers
-  socket.on('new-message', (msg) => {
-    setMessages((prev) => [...prev, msg]);
-    scrollToBottom();
-  });
+    socket.on('new-message', (msg) => {
+      setMessages((prev) => [...prev, msg]);
+      scrollToBottom();
+    });
 
-  socket.on('session-time', ({ remaining }) => {
-    setRemainingTime(remaining);
-  });
+    socket.on('session-time', ({ remaining }) => {
+      setRemainingTime(remaining);
+    });
 
-  socket.on('session-ended', () => {
-    setSessionStatus('expired');
-  });
+    socket.on('session-ended', () => {
+      setSessionStatus('expired');
+    });
 
-  // ✅ Cleanup on unmount
-  return () => {
-    socket.off('connect');
-    socket.off('disconnect');
-    socket.off('connect_error');
-    socket.off('new-message');
-    socket.off('session-time');
-    socket.off('session-ended');
-  };
-}, [sessionToken, currentUser, bookingId]);
+    // ✅ Fallback: Force session active if not triggered in time
+    const fallbackTimer = setTimeout(() => {
+      if (sessionStatus === 'waiting') {
+        console.warn('⚠️ session-started not received, forcing session active');
+        setSessionStatus('active');
+        socket.emit('session-started', {
+          bookingId,
+          duration: chatDuration * 60
+        });
+      }
+    }, 5000); // fallback after 5 seconds
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setRemainingTime((prev) => Math.max(0, prev - 1));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+    return () => {
+      clearTimeout(fallbackTimer);
+      socket.off('connect');
+      socket.off('disconnect');
+      socket.off('connect_error');
+      socket.off('session-started');
+      socket.off('new-message');
+      socket.off('session-time');
+      socket.off('session-ended');
+    };
+  }, [sessionToken, currentUser, bookingId, chatDuration, sessionStatus]);
 
   const handleSendMessage = (e) => {
     e.preventDefault();
@@ -83,17 +89,13 @@ const ChatBox = ({ sessionToken, chatDuration, lawyer, bookingId }) => {
       content: message,
       type: 'text',
       bookingId,
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toISOString()
     };
 
-    try {
-      socketRef.current?.emit('chat-message', msg);
-      setMessages((prev) => [...prev, msg]);
-      setMessage('');
-      scrollToBottom();
-    } catch (err) {
-      console.error('Failed to send message:', err);
-    }
+    socketRef.current?.emit('chat-message', msg);
+    setMessages((prev) => [...prev, msg]);
+    setMessage('');
+    scrollToBottom();
   };
 
   const scrollToBottom = () => {
@@ -115,16 +117,10 @@ const ChatBox = ({ sessionToken, chatDuration, lawyer, bookingId }) => {
 
   return (
     <div className="legal-chat-container">
-      {/* Connection status indicator */}
-      <div className={`connection-status ${socketConnected ? 'connected' : 'disconnected'}`}>
-        {socketConnected ? (
-          <span>✓ Connected</span>
-        ) : (
-          <span>⚠️ Connecting...</span>
-        )}
+      <div className="connection-status">
+        {socketConnected ? '🟢 Connected' : '🔴 Disconnected'} | Status: {sessionStatus}
       </div>
 
-      {/* Chat header */}
       <div className="legal-chat-header">
         <div className="lawyer-profile">
           <div className="lawyer-avatar">
@@ -132,16 +128,13 @@ const ChatBox = ({ sessionToken, chatDuration, lawyer, bookingId }) => {
           </div>
           <div className="lawyer-info">
             <h3>Consultation with {lawyer?.name}</h3>
-            <p className="lawyer-title">{lawyer?.specialization || 'Attorney at Law'}</p>
+            <p>{lawyer?.specialization || 'Legal Professional'}</p>
           </div>
         </div>
-        
         <div className="session-info">
-          <div className="session-timer">
-            <i className="icon-clock"></i> {formatTime(remainingTime)}
-          </div>
+          <div className="session-timer">{formatTime(remainingTime)}</div>
           <div className={`session-status ${sessionStatus}`}>
-            {sessionStatus === 'active' ? 'Session Active' : 'Session Ended'}
+            {sessionStatus === 'active' ? 'Session Active' : 'Waiting...'}
           </div>
           {sessionStatus === 'active' && (
             <button className="end-session-btn" onClick={handleEndSession}>
@@ -151,67 +144,52 @@ const ChatBox = ({ sessionToken, chatDuration, lawyer, bookingId }) => {
         </div>
       </div>
 
-      {/* Chat messages */}
       <div className="legal-chat-messages">
-        {messages.length === 0 ? (
+        {sessionStatus === 'waiting' ? (
+          <div className="empty-chat text-center text-muted p-4">
+            <p>Setting up your secure consultation session...</p>
+            <div className="spinner-border text-secondary mt-2" />
+          </div>
+        ) : messages.length === 0 ? (
           <div className="empty-chat">
-            <div className="empty-chat-icon">⚖️</div>
-            <h4>Your Secure Legal Consultation</h4>
+            <h4>⚖️ Your Secure Legal Consultation</h4>
             <p>This is a private, encrypted conversation with your attorney.</p>
-            <p>All communications are confidential and protected by attorney-client privilege.</p>
+            <p>All communications are confidential and protected.</p>
           </div>
         ) : (
           messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`legal-message ${msg.senderId === currentUser.id ? 'sent' : 'received'}`}
-            >
+            <div key={msg.id} className={`legal-message ${msg.senderId === currentUser.id ? 'sent' : 'received'}`}>
               <div className="message-meta">
                 <span className="message-sender">{msg.sender}</span>
                 <span className="message-time">
                   {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
-              <div className="message-content">
-                {msg.content}
-              </div>
+              <div className="message-content">{msg.content}</div>
             </div>
           ))
         )}
-        <div ref={messagesEndRef}></div>
+        <div ref={messagesEndRef} />
       </div>
 
-      {/* Chat input */}
-      {sessionStatus === 'active' ||"" ? (
+      {sessionStatus === 'active' ? (
         <form onSubmit={handleSendMessage} className="legal-chat-input">
-          <div className="input-container">
-            <input
-              type="text"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Type your message..."
-              disabled={!socketConnected}
-            />
-            <button 
-              type="submit" 
-              className="send-btn"
-              disabled={!message.trim() || !socketConnected}
-            >
-              Send
-            </button>
-          </div>
-          <div className="security-notice">
-            <i className="icon-lock"></i> Messages are encrypted and confidential
-          </div>
-        </form>
-      ) : (
-        <div className="session-ended">
-          <p>This consultation session has ended.</p>
-          <button className="request-new-session">
-            Request New Consultation
+          <input
+            type="text"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Type your message..."
+            disabled={!socketConnected}
+          />
+          <button type="submit" disabled={!message.trim() || !socketConnected}>
+            Send
           </button>
+        </form>
+      ) : sessionStatus === 'expired' ? (
+        <div className="session-ended text-center p-3">
+          <p>This consultation session has ended.</p>
         </div>
-      )}
+      ) : null}
     </div>
   );
 };

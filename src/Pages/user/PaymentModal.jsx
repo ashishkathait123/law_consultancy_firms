@@ -13,6 +13,7 @@ const PaymentModal = ({ show, handleClose, serviceType, lawyer, onPaymentSuccess
   const [internalShow, setInternalShow] = useState(show);
   const [bookingAccepted, setBookingAccepted] = useState(false);
   const [bookingId, setBookingId] = useState(null);
+const [chatReady, setChatReady] = useState(false);
 
   const serviceDetails = {
     call: { price: 10, icon: 'fa-phone', color: '#0d6efd', name: 'Phone Call' },
@@ -77,12 +78,15 @@ const PaymentModal = ({ show, handleClose, serviceType, lawyer, onPaymentSuccess
 
         if (socket && userData) {
           // ✅ Attach booking-accepted listener before emitting
-          socket.on('booking-accepted', (data) => {
-            console.log("✅ Received booking-accepted in client:", data);
-            if (data.bookingId === bookingId) {
-              setBookingAccepted(true);
-            }
-          });
+    socket.on('session-started', (data) => {
+  if (data.bookingId === bookingId) {
+    console.log("✅ session-started confirmed by server:", data);
+    setChatReady(true); // ✅ Now allow ChatBox to appear
+  }
+});
+
+
+
 
           socket.emit('join-user', userData.userId);
           socket.emit('join-lawyer', verifyData.booking.lawyerId);
@@ -188,17 +192,29 @@ const PaymentModal = ({ show, handleClose, serviceType, lawyer, onPaymentSuccess
 
   if (paymentSuccess && sessionToken && serviceType === 'chat' && bookingAccepted) {
     return (
-      <Modal show={internalShow} onHide={handleHide} centered size="lg" fullscreen="md-down">
-        <Modal.Header closeButton style={{ background: '#1E4D7A', color: 'white' }}>
-          <Modal.Title>
-            <i className={`fas ${serviceDetails[serviceType]?.icon} me-2`}></i>
-            Chat Session with {lawyer?.name}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body style={{ padding: 0 }}>
-          <ChatBox sessionToken={sessionToken} chatDuration={duration} lawyer={lawyer} bookingId={bookingId} />
-        </Modal.Body>
-      </Modal>
+     <Modal
+  show={internalShow}
+  onHide={handleHide}
+  centered
+  fullscreen // force full screen on all devices
+>
+  <Modal.Header closeButton style={{ background: '#1E4D7A', color: 'white' }}>
+    <Modal.Title>
+      <i className={`fas ${serviceDetails[serviceType]?.icon} me-2`}></i>
+      Chat Session with {lawyer?.name}
+    </Modal.Title>
+  </Modal.Header>
+
+  <Modal.Body style={{ padding: 0, height: '100vh', overflow: 'hidden' }}>
+    <ChatBox
+      sessionToken={sessionToken}
+      chatDuration={duration}
+      lawyer={lawyer}
+      bookingId={bookingId}
+    />
+  </Modal.Body>
+</Modal>
+
     );
   }
 
