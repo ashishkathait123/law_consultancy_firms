@@ -129,7 +129,7 @@ const handleViewProfile = (lawyer) => {
               </select>
             </div>
 
-            <div className="col-md-4">
+            {/* <div className="col-md-4">
               <label htmlFor="state" className="form-label">State</label>
               <select
                 id="state"
@@ -143,8 +143,8 @@ const handleViewProfile = (lawyer) => {
                   <option key={idx} value={state}>{state}</option>
                 ))}
               </select>
-            </div>
-
+            </div> */}
+{/* 
             <div className="col-md-4">
               <label htmlFor="city" className="form-label">City</label>
               <select
@@ -161,7 +161,7 @@ const handleViewProfile = (lawyer) => {
                     <option key={idx} value={city}>{city}</option>
                   ))}
               </select>
-            </div>
+            </div> */}
 
             <div className="col-12 text-center">
               <button onClick={resetFilters} className="btn btn-outline-secondary me-2">

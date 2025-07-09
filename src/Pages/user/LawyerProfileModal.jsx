@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Modal, Button, Tab, Tabs } from 'react-bootstrap';
 import PaymentModal from './PaymentModal';
+import { FaUserTie, FaStar, FaMapMarkerAlt, FaGraduationCap, FaLanguage, FaMoneyBillWave, FaClock, FaPhone, FaCommentDots, FaVideo, FaCheckCircle, FaTimesCircle, FaCertificate } from 'react-icons/fa';
+
 const LawyerProfileModal = ({ show, handleClose, lawyer }) => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
@@ -33,6 +35,11 @@ const LawyerProfileModal = ({ show, handleClose, lawyer }) => {
     handleClose();
   };
 
+  // Construct the image URL if available
+  const lawyerImageUrl = lawyer?.lawyerImage 
+    ? `https://lawyerbackend-qrqa.onrender.com${lawyer.lawyerImage}`
+    : null;
+
   return (
     <>
       {/* Main Profile Modal */}
@@ -52,16 +59,16 @@ const LawyerProfileModal = ({ show, handleClose, lawyer }) => {
             {/* Left section */}
             <div className="col-12 col-md-4 text-center p-4" style={{ background: '#f8f9fa' }}>
               <div className="lawyer-avatar">
-                {lawyer?.photo ? (
+                {lawyerImageUrl ? (
                   <img 
-                    src={lawyer.photo} 
-                    alt={lawyer.name} 
+                    src={lawyerImageUrl} 
+                    alt={lawyer?.name || 'Lawyer'} 
                     className="img-fluid rounded-circle"
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 ) : (
                   <div className="avatar-placeholder">
-                    <i className="fas fa-user-tie"></i>
+                    <FaUserTie size={50} color="#1E4D7A" />
                   </div>
                 )}
               </div>
@@ -73,10 +80,10 @@ const LawyerProfileModal = ({ show, handleClose, lawyer }) => {
                 <div className="rating">
                   <div className="stars">
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <i
+                      <FaStar
                         key={i}
-                        className={`fas fa-star ${i < (lawyer?.rating || 0) ? 'text-warning' : 'text-secondary'}`}
-                      ></i>
+                        color={i < (lawyer?.rating || 0) ? '#E8B63A' : '#6c757d'}
+                      />
                     ))}
                   </div>
                   <div className="rating-text">{lawyer?.reviews?.length || 0} reviews</div>
@@ -94,17 +101,17 @@ const LawyerProfileModal = ({ show, handleClose, lawyer }) => {
                     lawyer?.isverified ? 'bg-success' : 'bg-secondary'
                   } d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill text-white`}
                 >
-                  <i className={`fas fa-${lawyer?.isverified ? 'check-circle' : 'times-circle'}`}></i>
+                  {lawyer?.isverified ? <FaCheckCircle /> : <FaTimesCircle />}
                   {lawyer?.isverified ? 'Verified' : 'Not Verified'}
                 </span>
 
                 <span className="specialization-badge badge bg-primary d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill text-white">
-                  <i className="fas fa-certificate"></i> {lawyer?.licenseNumber}
+                  <FaCertificate /> {lawyer?.licenseNumber}
                 </span>
               </div>
               
               <div className="lawyer-location">
-                <i className="fas fa-map-marker-alt me-2"></i>
+                <FaMapMarkerAlt className="me-2" />
                 {lawyer?.city}, {lawyer?.state}
               </div>
             </div>
@@ -115,26 +122,26 @@ const LawyerProfileModal = ({ show, handleClose, lawyer }) => {
                 <Tab eventKey="profile" title="Profile">
                   <div className="mt-3">
                     <h5 style={{ color: '#1E4D7A' }}>About</h5>
-                    <p style={{ color: '#444' }}>{lawyer?.bio || 'No bio available'}</p>
+                    <p style={{ color: '#444' }}>{lawyer?.profileDescription || 'No profile description available'}</p>
 
                     <div className="lawyer-details">
                       <h5 style={{ color: '#1E4D7A', marginBottom: '15px' }}>Details</h5>
                       <ul className="list-unstyled">
                         <li className="mb-2">
-                          <i className="fas fa-graduation-cap text-primary me-2"></i>
-                          <span><strong>Education:</strong> {lawyer?.education || 'Not specified'}</span>
+                          <FaGraduationCap className="text-primary me-2" />
+                          <span><strong>Education:</strong> {lawyer?.education?.join(', ') || 'Not specified'}</span>
                         </li>
                         <li className="mb-2">
-                          <i className="fas fa-language text-primary me-2"></i>
-                          <span><strong>Languages:</strong> {lawyer?.languages?.join(', ') || 'English'}</span>
+                          <FaLanguage className="text-primary me-2" />
+                          <span><strong>Languages:</strong> English</span>
                         </li>
                         <li className="mb-2">
-                          <i className="fas fa-money-bill-wave text-primary me-2"></i>
-                          <span><strong>Consultation Fee:</strong> ₹{lawyer?.consultationFee || '500'}/hr</span>
+                          <FaMoneyBillWave className="text-primary me-2" />
+                          <span><strong>Consultation Fee:</strong> ₹{lawyer?.consultation_fees || '500'}/hr</span>
                         </li>
                         <li className="mb-2">
-                          <i className="fas fa-clock text-primary me-2"></i>
-                          <span><strong>Availability:</strong> {lawyer?.availability || 'Not specified'}</span>
+                          <FaClock className="text-primary me-2" />
+                          <span><strong>Availability:</strong> {lawyer?.status || 'Not specified'}</span>
                         </li>
                       </ul>
                     </div>
@@ -152,10 +159,10 @@ const LawyerProfileModal = ({ show, handleClose, lawyer }) => {
                           </div>
                           <div className="my-2">
                             {Array.from({ length: 5 }).map((_, i) => (
-                              <i
+                              <FaStar
                                 key={i}
-                                className={`fas fa-star ${i < review.rating ? 'text-warning' : 'text-secondary'}`}
-                              ></i>
+                                color={i < review.rating ? '#E8B63A' : '#6c757d'}
+                              />
                             ))}
                           </div>
                           <p className="mb-0" style={{ color: '#444' }}>{review.comment}</p>
@@ -163,7 +170,7 @@ const LawyerProfileModal = ({ show, handleClose, lawyer }) => {
                       ))
                     ) : (
                       <div className="text-center py-4">
-                        <i className="far fa-comment-dots fa-3x text-muted mb-3"></i>
+                        <FaCommentDots size={48} className="text-muted mb-3" />
                         <p style={{ color: '#666' }}>No reviews yet</p>
                       </div>
                     )}
@@ -174,16 +181,16 @@ const LawyerProfileModal = ({ show, handleClose, lawyer }) => {
                   <div className="mt-3">
                     <div className="service-card mb-3 p-3 border rounded">
                       <div className="d-flex align-items-center mb-2">
-                        <i className="fas fa-comment-dots text-success me-3 fa-2x"></i>
+                        <FaCommentDots className="text-success me-3" size={24} />
                         <div>
                           <h5 style={{ color: '#1E4D7A', marginBottom: '5px' }}>Chat Consultation</h5>
                           <p style={{ color: '#666', marginBottom: '0' }}>
-                            Instant text chat with {lawyer?.name.split(' ')[0]}
+                            Instant text chat with {lawyer?.name?.split(' ')[0]}
                           </p>
                         </div>
                       </div>
                       <div className="d-flex justify-content-between align-items-center mt-2">
-                        <span className="text-muted">Starting at ₹{lawyer?.chatFee || '500'}/30 min</span>
+                        <span className="text-muted">Starting at ₹{lawyer?.consultation_fees || '500'}/30 min</span>
                         <Button 
                           variant="outline-success" 
                           size="sm"
@@ -196,16 +203,16 @@ const LawyerProfileModal = ({ show, handleClose, lawyer }) => {
 
                     <div className="service-card mb-3 p-3 border rounded">
                       <div className="d-flex align-items-center mb-2">
-                        <i className="fas fa-phone text-primary me-3 fa-2x"></i>
+                        <FaPhone className="text-primary me-3" size={24} />
                         <div>
                           <h5 style={{ color: '#1E4D7A', marginBottom: '5px' }}>Phone Consultation</h5>
                           <p style={{ color: '#666', marginBottom: '0' }}>
-                            Scheduled phone call with {lawyer?.name.split(' ')[0]}
+                            Scheduled phone call with {lawyer?.name?.split(' ')[0]}
                           </p>
                         </div>
                       </div>
                       <div className="d-flex justify-content-between align-items-center mt-2">
-                        <span className="text-muted">Starting at ₹{lawyer?.callFee || '800'}/30 min</span>
+                        <span className="text-muted">Starting at ₹{(lawyer?.consultation_fees || 500) + 300}/30 min</span>
                         <Button 
                           variant="outline-primary" 
                           size="sm"
@@ -218,16 +225,16 @@ const LawyerProfileModal = ({ show, handleClose, lawyer }) => {
 
                     <div className="service-card p-3 border rounded">
                       <div className="d-flex align-items-center mb-2">
-                        <i className="fas fa-video text-danger me-3 fa-2x"></i>
+                        <FaVideo className="text-danger me-3" size={24} />
                         <div>
                           <h5 style={{ color: '#1E4D7A', marginBottom: '5px' }}>Video Consultation</h5>
                           <p style={{ color: '#666', marginBottom: '0' }}>
-                            Face-to-face video meeting with {lawyer?.name.split(' ')[0]}
+                            Face-to-face video meeting with {lawyer?.name?.split(' ')[0]}
                           </p>
                         </div>
                       </div>
                       <div className="d-flex justify-content-between align-items-center mt-2">
-                        <span className="text-muted">Starting at ₹{lawyer?.videoFee || '1000'}/30 min</span>
+                        <span className="text-muted">Starting at ₹{(lawyer?.consultation_fees || 500) + 500}/30 min</span>
                         <Button 
                           variant="outline-danger" 
                           size="sm"
@@ -251,21 +258,21 @@ const LawyerProfileModal = ({ show, handleClose, lawyer }) => {
               onClick={() => handleOpenPayment('call')}
               className="d-flex align-items-center"
             >
-              <i className="fas fa-phone me-2"></i> Call
+              <FaPhone className="me-2" /> Call
             </Button>
             <Button 
               variant="outline-success" 
               onClick={() => handleOpenPayment('chat')}
               className="d-flex align-items-center"
             >
-              <i className="fas fa-comment-dots me-2"></i> Chat
+              <FaCommentDots className="me-2" /> Chat
             </Button>
             <Button 
               variant="outline-danger" 
               onClick={() => handleOpenPayment('video')}
               className="d-flex align-items-center"
             >
-              <i className="fas fa-video me-2"></i> Video
+              <FaVideo className="me-2" /> Video
             </Button>
           </div>
           <Button 
@@ -298,11 +305,21 @@ const LawyerProfileModal = ({ show, handleClose, lawyer }) => {
         >
           <Modal.Header closeButton style={{ background: '#1E4D7A', color: 'white' }}>
             <Modal.Title>
-              <i className="fas fa-comment-dots me-2"></i>
+              <FaCommentDots className="me-2" />
               Chat with {lawyer?.name}
             </Modal.Title>
           </Modal.Header>
-         
+          <Modal.Body>
+            <div className="text-center py-4">
+              <h4>Chat session initialized</h4>
+              <p>You can now chat with {lawyer?.name} for {activeSession.duration} minutes</p>
+            </div>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={handleChatClose}>
+              End Chat
+            </Button>
+          </Modal.Footer>
         </Modal>
       )}
     </>
@@ -310,110 +327,3 @@ const LawyerProfileModal = ({ show, handleClose, lawyer }) => {
 };
 
 export default LawyerProfileModal;
-
-// CSS Styles
-const styles = `
-  .lawyer-avatar {
-    width: 120px;
-    height: 120px;
-    margin: 0 auto 20px;
-    border-radius: 50%;
-    overflow: hidden;
-    border: 4px solid white;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  }
-  
-  .avatar-placeholder {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #e9ecef;
-    color: #1E4D7A;
-    font-size: 2.5rem;
-  }
-  
-  .lawyer-name {
-    color: #1E4D7A;
-    font-weight: 600;
-    margin-bottom: 5px;
-  }
-  
-  .lawyer-title {
-    color: #6c757d;
-    font-size: 0.9rem;
-    margin-bottom: 15px;
-  }
-  
-  .rating-experience {
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    margin: 20px 0;
-    padding: 15px 0;
-    border-top: 1px solid #dee2e6;
-    border-bottom: 1px solid #dee2e6;
-  }
-  
-  .rating {
-    text-align: center;
-  }
-  
-  .stars {
-    color: #E8B63A;
-    font-size: 1rem;
-    margin-bottom: 5px;
-  }
-  
-  .rating-text {
-    font-size: 0.8rem;
-    color: #6c757d;
-  }
-  
-  .experience {
-    text-align: center;
-  }
-  
-  .years {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #1E4D7A;
-    line-height: 1;
-  }
-  
-  .label {
-    font-size: 0.8rem;
-    color: #6c757d;
-  }
-  
-  .lawyer-location {
-    color: #6c757d;
-    font-size: 0.9rem;
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .lawyer-details li {
-    padding: 8px 0;
-    border-bottom: 1px solid #f1f1f1;
-    display: flex;
-    align-items: center;
-  }
-  
-  .service-card {
-    transition: all 0.3s ease;
-  }
-  
-  .service-card:hover {
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
-  }
-`;
-
-// Add styles to the head
-const styleElement = document.createElement('style');
-styleElement.innerHTML = styles;
-document.head.appendChild(styleElement);

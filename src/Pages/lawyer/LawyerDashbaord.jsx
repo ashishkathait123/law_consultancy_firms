@@ -15,7 +15,6 @@ import {
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import {
-  Person as PersonIcon,
   Work as WorkIcon,
   Phone as PhoneIcon,
   Email as EmailIcon,
@@ -28,6 +27,7 @@ import { initSocket, getSocket } from "../../components/socket";
 import Header from "./Header";
 import Stats from "./Stats";
 import Livechat from "./liveChate";
+import ChatBox from "../../components/ChatBox";
 
 const useLawyerData = () => {
   const [data, setData] = useState({
@@ -65,7 +65,6 @@ const useLawyerData = () => {
           loading: false,
           error: null
         });
-
       } catch (error) {
         console.error("Error fetching data:", error);
         setData(prev => ({
@@ -180,18 +179,12 @@ const ProfileCard = ({ lawyer, stats }) => {
 };
 
 const LawyerDashboard = () => {
-  const {
-    lawyer,
-    stats,
-    loading,
-    error
-  } = useLawyerData();
-
+  const { lawyer, stats, loading, error } = useLawyerData();
   const [notificationData, setNotificationData] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [connected, setConnected] = useState(false);
+  const [startChat, setStartChat] = useState(false);
+  const [chatSessionData, setChatSessionData] = useState(null);
   const socketRef = useRef(null);
-
   const theme = useTheme();
 
   const handleLogout = () => {
@@ -235,9 +228,14 @@ const LawyerDashboard = () => {
             duration: 15 * 60,
           });
 
-          console.log('✅ Emitted booking-accepted and session-started');
-        }
+          setChatSessionData({
+            bookingId,
+            userId,
+            duration: 15 * 60
+          });
 
+          setStartChat(true); // Show ChatBox
+        }
       } else {
         console.error(`❌ Booking ${status} failed:`, result.message || result);
       }
@@ -271,7 +269,7 @@ const LawyerDashboard = () => {
         </Modal.Body>
         <Modal.Footer>
           <Button variant="danger" onClick={handleReject}>Reject</Button>
-          <Button variant="success" onClick={handleAccept}>Accept</Button>
+          <Button variant="success" onClick={handleAccept}>Accept & Start Chat</Button>
         </Modal.Footer>
       </Modal>
     );
@@ -286,18 +284,7 @@ const LawyerDashboard = () => {
     socketRef.current = socket;
 
     socket.on('connect', () => {
-      setConnected(true);
       socket.emit('join-lawyer', userData.lawyerId);
-    });
-
-    socket.on('disconnect', () => setConnected(false));
-
-    socket.on('joined-lawyer-room', ({ lawyerId }) => {
-      console.log(`🎉 Joined lawyer room: ${lawyerId}`);
-    });
-
-    socket.onAny((event, ...args) => {
-      console.log(`📡 Event: ${event}`, args);
     });
 
     socket.on('booking-notification', (data) => {
@@ -353,31 +340,42 @@ const LawyerDashboard = () => {
 
   return (
     <Paper sx={{ minHeight: "100vh", borderRadius: 0 }}>
-      <Livechat />
-      <Box sx={{ p: { xs: 2, md: 4 } }}>
-        <Header lawyerName={lawyer.name} onLogout={handleLogout} />
-        <Stats stats={stats} theme={theme} />
+      {startChat ? (
+        <ChatBox
+          sessionToken={sessionStorage.getItem('token')}
+          chatDuration={chatSessionData.duration}
+          lawyer={lawyer}
+          bookingId={chatSessionData.bookingId}
+        />
+      ) : (
+        <>
+          <Livechat />
+          <Box sx={{ p: { xs: 2, md: 4 } }}>
+            <Header lawyerName={lawyer.name} onLogout={handleLogout} />
+            <Stats stats={stats} theme={theme} />
 
-        <Grid container spacing={3} sx={{ mt: 2 }}>
-          <Grid item xs={12} md={5} lg={4}>
-            <ProfileCard lawyer={lawyer} stats={stats} />
-          </Grid>
+            <Grid container spacing={3} sx={{ mt: 2 }}>
+              <Grid item xs={12} md={5} lg={4}>
+                <ProfileCard lawyer={lawyer} stats={stats} />
+              </Grid>
 
-          <Grid item xs={12} md={7} lg={8}>
-            <Paper elevation={3} sx={{ p: 3, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Typography variant="h6" color="text.secondary">
-                Additional dashboard content will appear here
-              </Typography>
-            </Paper>
-          </Grid>
-        </Grid>
-      </Box>
+              <Grid item xs={12} md={7} lg={8}>
+                <Paper elevation={3} sx={{ p: 3, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Typography variant="h6" color="text.secondary">
+                    Additional dashboard content will appear here
+                  </Typography>
+                </Paper>
+              </Grid>
+            </Grid>
+          </Box>
 
-      <NotificationModal
-        show={showModal}
-        onClose={() => setShowModal(false)}
-        data={notificationData}
-      />
+          <NotificationModal
+            show={showModal}
+            onClose={() => setShowModal(false)}
+            data={notificationData}
+          />
+        </>
+      )}
     </Paper>
   );
 };

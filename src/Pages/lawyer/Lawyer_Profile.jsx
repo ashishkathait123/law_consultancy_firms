@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { FaUser, FaBell, FaPhone, FaEnvelope, FaBriefcase, FaCertificate, FaCheckCircle } from "react-icons/fa";
+import { FaUser, FaBell, FaPhone, FaEnvelope, FaBriefcase, FaCertificate, FaCheckCircle, FaGraduationCap, FaInfoCircle, FaCamera } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import io from "socket.io-client";
@@ -16,15 +16,16 @@ const LawyerProfile = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [socket, setSocket] = useState(null);
   const [isOnline, setIsOnline] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
 
-  // Initialize socket and fetch data in a single effect
   useEffect(() => {
     if (!token) {
       toast.error("No authentication token found.");
       return;
     }
 
-    // Socket initialization
     const newSocket = io("https://lawyerbackend-qrqa.onrender.com", { auth: { token }, transports: ["websocket"] });
     setSocket(newSocket);
 
@@ -35,7 +36,6 @@ const LawyerProfile = () => {
       toast.error("Failed to connect to notification service");
     });
 
-    // Fetch user data
     const fetchData = async () => {
       try {
         const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
@@ -56,7 +56,6 @@ const LawyerProfile = () => {
     };
   }, [token]);
 
-  // Handle socket events and room joining
   useEffect(() => {
     if (!socket) return;
 
@@ -95,6 +94,8 @@ const LawyerProfile = () => {
       consultation_fees: data.consultation_fees || "",
       licenseNumber: data.licenseNumber || "",
       addressline: data.addressline || "",
+      practiceArea: data.practiceArea || "",
+      profileDescription: data.profileDescription || "",
     });
     setShowModal(true);
   };
@@ -148,6 +149,53 @@ const LawyerProfile = () => {
     socket.emit(event, { bookingId: notification.bookingId, lawyerId: data.lawyerId });
     setNotifications((prev) => prev.map((n) => (n.id === notification.id ? { ...n, read: true } : n)));
     toast.success(successMsg);
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("Image size should be less than 2MB");
+        return;
+      }
+      setSelectedImage(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleImageUpload = async () => {
+    if (!selectedImage || !data?.lawyerId) return;
+
+    setUploadingImage(true);
+    const formData = new FormData();
+    formData.append("lawyerImage", selectedImage);
+
+    try {
+      const response = await axios.post(
+        `https://lawyerbackend-qrqa.onrender.com/lawapi/common/updatelawyer/${data.lawyerId}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setData({ ...data, lawyerImage: response.data.imagePath });
+        toast.success("Profile picture updated successfully!");
+        setImagePreview(null);
+        setSelectedImage(null);
+      } else {
+        toast.error(response.data.message || "Failed to update profile picture");
+      }
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast.error("Error uploading image: " + (error.response?.data?.message || "Network Error"));
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const handleAcceptRequest = (notification) => handleRequestAction(notification, "accept-session-request", "Session request accepted");
@@ -224,7 +272,55 @@ const LawyerProfile = () => {
 
       <motion.div className="profile-card left" initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
         <div className="profile-header">
-          <div className="profile-avatar">{data.profileImage ? <img src={data.profileImage} alt={data.name} /> : <FaUser size={40} />}</div>
+          <div className="profile-avatar-container">
+            <div className="profile-avatar">
+              {imagePreview ? (
+                <img src={imagePreview} alt="Preview" className="profile-picture" />
+              ) : data?.lawyerImage ? (
+                <img 
+                  src={`https://lawyerbackend-qrqa.onrender.com${data.lawyerImage}`} 
+                  alt={data.name} 
+                  className="profile-picture"
+                  onError={(e) => {
+                    e.target.onerror = null; 
+                    e.target.style.display = 'none';
+                  }}
+                />
+              ) : (
+                <FaUser size={40} className="profile-icon" />
+              )}
+            </div>
+            <label htmlFor="profile-upload" className="profile-upload-btn">
+              <FaCamera />
+              <input
+                id="profile-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                style={{ display: 'none' }}
+              />
+            </label>
+            {selectedImage && (
+              <div className="upload-actions">
+                <button 
+                  onClick={handleImageUpload} 
+                  disabled={uploadingImage}
+                  className="save-image-btn"
+                >
+                  {uploadingImage ? 'Uploading...' : 'Save'}
+                </button>
+                <button 
+                  onClick={() => {
+                    setSelectedImage(null);
+                    setImagePreview(null);
+                  }}
+                  className="cancel-image-btn"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
           <div>
             <h3 className="profile-name">{data.name}</h3>
             <p className="profile-role">{data.role}</p>
@@ -238,6 +334,7 @@ const LawyerProfile = () => {
           <MiniRow icon={<FaCertificate />} label={data.specialization || "Not specified"} />
           <MiniRow icon={<FaCheckCircle />} label={`License: ${data.licenseNumber || "N/A"}`} />
           <MiniRow icon={<FaCheckCircle />} label={`Verified: ${data.isverified ? "Yes" : "No"}`} />
+          <MiniRow icon={<FaInfoCircle />} label={`Practice Area: ${data.practiceArea || "Not specified"}`} />
         </div>
       </motion.div>
 
@@ -269,8 +366,30 @@ const LawyerProfile = () => {
           <h4>Professional Details</h4>
           <InfoRow label="Experience" value={`${data.experience || 0} years`} />
           <InfoRow label="Specialization" value={data.specialization || "Not specified"} />
+          <InfoRow label="Practice Area" value={data.practiceArea || "Not specified"} />
           <InfoRow label="Consultation Fees" value={`₹${data.consultation_fees || 0}`} />
           <InfoRow label="License Number" value={data.licenseNumber || "N/A"} />
+        </div>
+        <div className="section">
+          <h4>Education</h4>
+          {data.education && data.education.length > 0 ? (
+            <ul className="education-list">
+              {data.education.map((edu, index) => (
+                <li key={index} className="education-item">
+                  <FaGraduationCap className="education-icon" />
+                  <span>{edu}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="no-education">No education information provided</p>
+          )}
+        </div>
+        <div className="section">
+          <h4>Profile Description</h4>
+          <div className="profile-description">
+            {data.profileDescription || "No description provided"}
+          </div>
         </div>
         <div className="section">
           <h4>Account Information</h4>
@@ -316,9 +435,15 @@ const LawyerProfile = () => {
               </div>
               <div className="form-row">
                 <div className="form-group">
+                  <label>Practice Area</label>
+                  <input name="practiceArea" value={editedData.practiceArea || ""} onChange={handleInputChange} />
+                </div>
+                <div className="form-group">
                   <label>Consultation Fees (₹)</label>
                   <input type="number" name="consultation_fees" value={editedData.consultation_fees || ""} onChange={handleInputChange} min="0" />
                 </div>
+              </div>
+              <div className="form-row">
                 <div className="form-group">
                   <label>License Number</label>
                   <input name="licenseNumber" value={editedData.licenseNumber || ""} onChange={handleInputChange} />
@@ -327,6 +452,10 @@ const LawyerProfile = () => {
               <div className="form-group">
                 <label>Address</label>
                 <textarea name="addressline" value={editedData.addressline || ""} onChange={handleInputChange} rows="3" />
+              </div>
+              <div className="form-group">
+                <label>Profile Description</label>
+                <textarea name="profileDescription" value={editedData.profileDescription || ""} onChange={handleInputChange} rows="3" />
               </div>
               <div className="modal-actions">
                 <button type="button" className="cancel-btn" onClick={() => setShowModal(false)}>Cancel</button>

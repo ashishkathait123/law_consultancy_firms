@@ -8,7 +8,7 @@ const ChatBox = ({ sessionToken, chatDuration, lawyer, bookingId }) => {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
   const [remainingTime, setRemainingTime] = useState(chatDuration * 60);
-  const [sessionStatus, setSessionStatus] = useState('waiting'); // waiting | active | expired
+  const [sessionStatus, setSessionStatus] = useState('waiting');
   const [socketConnected, setSocketConnected] = useState(false);
 
   const socketRef = useRef(null);
@@ -17,9 +17,17 @@ const ChatBox = ({ sessionToken, chatDuration, lawyer, bookingId }) => {
   const currentUser = auth?.currentUser;
 
   useEffect(() => {
-    if (!sessionToken || !currentUser || !bookingId) return;
+    if (!sessionToken || !currentUser?.userId || !bookingId) {
+      console.warn("⏳ Waiting for sessionToken, userId, and bookingId");
+      return;
+    }
 
-    const socket = initSocket(sessionToken, currentUser.id, 'client');
+    const socket = initSocket(sessionToken, currentUser.userId, 'client');
+    if (!socket) {
+      console.error("❌ Socket initialization failed.");
+      return;
+    }
+
     socketRef.current = socket;
 
     socket.on('connect', () => {
@@ -27,9 +35,12 @@ const ChatBox = ({ sessionToken, chatDuration, lawyer, bookingId }) => {
       socket.emit('join-booking', bookingId);
     });
 
-    socket.on('disconnect', () => setSocketConnected(false));
+    socket.on('disconnect', () => {
+      setSocketConnected(false);
+    });
+
     socket.on('connect_error', (err) => {
-      console.error('Socket connection error:', err);
+      console.error('❌ Socket error:', err);
       setSocketConnected(false);
     });
 
@@ -42,8 +53,10 @@ const ChatBox = ({ sessionToken, chatDuration, lawyer, bookingId }) => {
     });
 
     socket.on('new-message', (msg) => {
-      setMessages((prev) => [...prev, msg]);
-      scrollToBottom();
+      if (msg.bookingId === bookingId) {
+        setMessages(prev => [...prev, msg]);
+        setTimeout(scrollToBottom, 100);
+      }
     });
 
     socket.on('session-time', ({ remaining }) => {
@@ -54,17 +67,13 @@ const ChatBox = ({ sessionToken, chatDuration, lawyer, bookingId }) => {
       setSessionStatus('expired');
     });
 
-    // ✅ Fallback: Force session active if not triggered in time
+    // Fallback if session-started not received within 7s
     const fallbackTimer = setTimeout(() => {
-      if (sessionStatus === 'waiting') {
-        console.warn('⚠️ session-started not received, forcing session active');
-        setSessionStatus('active');
-        socket.emit('session-started', {
-          bookingId,
-          duration: chatDuration * 60
-        });
+      if (socket.connected && sessionStatus === 'waiting') {
+        console.warn('⚠️ session-started not received, still waiting...');
+        // Don't emit from client — wait for server-side emit or reconnect
       }
-    }, 5000); // fallback after 5 seconds
+    }, 7000);
 
     return () => {
       clearTimeout(fallbackTimer);
@@ -76,26 +85,26 @@ const ChatBox = ({ sessionToken, chatDuration, lawyer, bookingId }) => {
       socket.off('session-time');
       socket.off('session-ended');
     };
-  }, [sessionToken, currentUser, bookingId, chatDuration, sessionStatus]);
+  }, [sessionToken, currentUser?.userId, bookingId, chatDuration, sessionStatus]);
 
   const handleSendMessage = (e) => {
     e.preventDefault();
-    if (!message.trim() || sessionStatus !== 'active') return;
+    if (!message.trim() || sessionStatus !== 'active' || !socketConnected) return;
 
     const msg = {
       id: uuidv4(),
       sender: currentUser.name,
-      senderId: currentUser.id,
+      senderId: currentUser.userId,
       content: message,
       type: 'text',
       bookingId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     socketRef.current?.emit('chat-message', msg);
-    setMessages((prev) => [...prev, msg]);
+    setMessages(prev => [...prev, msg]);
     setMessage('');
-    scrollToBottom();
+    setTimeout(scrollToBottom, 100);
   };
 
   const scrollToBottom = () => {
@@ -110,7 +119,7 @@ const ChatBox = ({ sessionToken, chatDuration, lawyer, bookingId }) => {
 
   const handleEndSession = () => {
     if (window.confirm('Are you sure you want to end this session?')) {
-      socketRef.current?.emit('end-session', { sessionToken });
+      socketRef.current?.emit('end-session', { bookingId });
       setSessionStatus('expired');
     }
   };
@@ -121,11 +130,15 @@ const ChatBox = ({ sessionToken, chatDuration, lawyer, bookingId }) => {
         {socketConnected ? '🟢 Connected' : '🔴 Disconnected'} | Status: {sessionStatus}
       </div>
 
+      {!socketConnected && sessionStatus === 'active' && (
+        <div className="alert alert-danger text-center">
+          ⚠️ Connection lost. Trying to reconnect...
+        </div>
+      )}
+
       <div className="legal-chat-header">
         <div className="lawyer-profile">
-          <div className="lawyer-avatar">
-            {lawyer?.name?.charAt(0).toUpperCase()}
-          </div>
+          <div className="lawyer-avatar">{lawyer?.name?.charAt(0).toUpperCase()}</div>
           <div className="lawyer-info">
             <h3>Consultation with {lawyer?.name}</h3>
             <p>{lawyer?.specialization || 'Legal Professional'}</p>
@@ -158,7 +171,7 @@ const ChatBox = ({ sessionToken, chatDuration, lawyer, bookingId }) => {
           </div>
         ) : (
           messages.map((msg) => (
-            <div key={msg.id} className={`legal-message ${msg.senderId === currentUser.id ? 'sent' : 'received'}`}>
+            <div key={msg.id} className={`legal-message ${msg.senderId === currentUser.userId ? 'sent' : 'received'}`}>
               <div className="message-meta">
                 <span className="message-sender">{msg.sender}</span>
                 <span className="message-time">

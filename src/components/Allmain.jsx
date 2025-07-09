@@ -16,6 +16,7 @@ import FindLawyer from "../Pages/user/FindLawyer.jsx";
 import CaseHistory from "../Pages/user/CaseHistory.jsx";
 import UserHistory from "../Pages/Admin/UserHistory.jsx";
 import LawyerHistory from "../Pages/Admin/LawyerHistory.jsx";
+import LawyerProfile from "../Pages/lawyer/Lawyer_Profile.jsx";
 import "./main.css";
 
 const Allmain = () => {
@@ -27,6 +28,7 @@ const Allmain = () => {
       "/admin/dashboard": "Admin Dashboard",
       "/user/dashboard": "User Dashboard",
       "/lawyer/dashboard": "Lawyer Dashboard",
+      "/lawyer/Lawyer_Profile": "Lawyer Profile",
       "/admin/lawyerManagement": "Manage Lawyers",
       "/admin/customner": "Manage Customers",
       "/user/profile": "Manage profile",
@@ -64,6 +66,7 @@ style={{ background: "#f9f7f1", minHeight: "100vh" }}
           <Route path="/user/CaseHistory" element={<AuthRoute> <CaseHistory /> </AuthRoute>} />
           <Route path="/lawyer/history" element={<AuthRoute> <LawyerHistory/> </AuthRoute>} />
            <Route path="/user/history" element={<AuthRoute> <UserHistory/> </AuthRoute>} />
+           <Route path="/lawyer/Lawyer_Profile" element={<AuthRoute> <LawyerProfile/> </AuthRoute>} />
           <Route path="/logout" element={<Logout />} />
         </Routes>
       </main>
