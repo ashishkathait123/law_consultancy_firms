@@ -122,8 +122,8 @@ const SideBar = () => {
                 {dropdowns.clients ? <BiChevronUp size={20} /> : <BiChevronDown size={20} />}
               </div>
               <ul className={`nav-content collapse ${dropdowns.clients ? "show" : ""}`}>
-                <li><Link to="/clients/all"><i className="bi bi-circle" /> All Clients</Link></li>
-                <li><Link to="/clients/add"><i className="bi bi-circle" /> Add New Client</Link></li>
+                <li><Link to="/lawyer/ClientRquest"><i className="bi bi-circle" />Clients Requests</Link></li>
+                {/* <li><Link to="/clients/add"><i className="bi bi-circle" /> Add New Client</Link></li> */}
               </ul>
             </li>
 
@@ -165,7 +165,7 @@ const SideBar = () => {
             </li>
 
             <li className="nav-item">
-              <Link className="nav-link" to="/Mybooking">
+              <Link className="nav-link" to="/lawyer/Mybooking">
                 <FaMoneyBillWave size={20} />
                 <span>Booking</span>
               </Link>

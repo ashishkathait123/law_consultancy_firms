@@ -6,7 +6,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './AuthAnimation.css';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { useNavigate } from "react-router-dom";
-
+import WebNav from '../components/Web-nav/WebNav';
 const AuthPage = () => {
   const [isLoginVisible, setIsLoginVisible] = useState(false);
   const [isRegisterVisible, setIsRegisterVisible] = useState(true);
@@ -226,6 +226,7 @@ console.log("Logged in user:", response.data.user);
       padding: '1rem 0',
       overflow: 'hidden'
     }}>
+      <WebNav />
       <ToastContainer position="top-center" autoClose={5000} />
       <div className="container">
         <div className="row align-items-center">

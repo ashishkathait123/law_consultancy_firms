@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import axios from 'axios';
+
 import { FaGavel, FaCheckCircle, FaMapMarkerAlt, FaCertificate, FaGraduationCap, FaLanguage, FaUserTie } from 'react-icons/fa';
 import { FaStar, FaStarHalfAlt } from 'react-icons/fa';
 import { FaCircle } from 'react-icons/fa';
@@ -37,38 +39,41 @@ const OfflineIndicator = styled(FaCircle)`
 
 const LawyerCard = ({ lawyer, onViewProfile }) => {
   const [showRequestModal, setShowRequestModal] = useState(false);
-  const [requestForm, setRequestForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-    consultationAbout: ''
-  });
+ const [requestForm, setRequestForm] = useState({
+  message: ''
+});
 
   const isOnline = lawyer.status === 'online';
 
-  const handleRequestSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      // Replace with your actual API endpoint
-      await axios.post('https://lawyerbackend-qrqa.onrender.com/api/consultation-requests', {
-        lawyerId: lawyer._id,
-        ...requestForm
-      });
-      toast.success('Your request has been submitted successfully!');
-      setShowRequestModal(false);
-      setRequestForm({
-        name: '',
-        email: '',
-        phone: '',
-        address: '',
-        consultationAbout: ''
-      });
-    } catch (error) {
-      toast.error('Failed to submit request. Please try again.');
-      console.error('Request submission error:', error);
-    }
+const handleRequestSubmit = async (e) => {
+  e.preventDefault();
+
+  const userData = JSON.parse(sessionStorage.getItem("userData") || "{}");
+  const userId = userData.userId;
+
+  if (!userId) {
+    toast.error("User is not logged in. Please log in first.");
+    return;
+  }
+
+  const payload = {
+    lawyerId: lawyer.lawyerId || lawyer._id,
+    userId,
+    message: requestForm.message.trim()
   };
+
+  try {
+    console.log("Sending payload:", payload);
+    await axios.post("https://lawyerbackend-qrqa.onrender.com/lawapi/common/sendlawyerrequest", payload);
+    toast.success("Your request has been submitted successfully!");
+    setShowRequestModal(false);
+    setRequestForm({ message: "" });
+  } catch (error) {
+    console.error("Request submission error:", error);
+    toast.error(error.response?.data?.message || "Failed to submit request.");
+  }
+};
+
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -174,8 +179,7 @@ const LawyerCard = ({ lawyer, onViewProfile }) => {
             </li>
           )}
         </ul>
-
-       <div className="action-buttons">
+<div className="action-buttons">
   <button 
     className="view-profile-btn"
     onClick={() => onViewProfile(lawyer)}
@@ -183,13 +187,16 @@ const LawyerCard = ({ lawyer, onViewProfile }) => {
     <FaUserTie className="icon" /> View Profile
   </button>
 
-  <button 
-    className="request-btn"
-    onClick={() => setShowRequestModal(true)}
-  >
-    Send Request
-  </button>
+  {!isOnline && (
+    <button 
+      className="request-btn"
+      onClick={() => setShowRequestModal(true)}
+    >
+      Send Request
+    </button>
+  )}
 </div>
+
 
       </div>
 
@@ -199,75 +206,23 @@ const LawyerCard = ({ lawyer, onViewProfile }) => {
           <Modal.Title>Request Consultation</Modal.Title>
         </Modal.Header>
         <Form onSubmit={handleRequestSubmit}>
-          <Modal.Body>
-            <p className="mb-4">You're requesting a consultation with <strong>{lawyer.name}</strong>.</p>
-            
-            <Form.Group className="mb-3">
-              <Form.Label>Full Name *</Form.Label>
-              <Form.Control 
-                type="text" 
-                name="name"
-                required 
-                value={requestForm.name}
-                onChange={handleInputChange}
-                placeholder="Enter your full name"
-              />
-            </Form.Group>
+        <Modal.Body>
+  <p className="mb-4">You're sending a request to <strong>{lawyer.name}</strong>.</p>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Email *</Form.Label>
-              <Form.Control 
-                type="email" 
-                name="email"
-                required 
-                value={requestForm.email}
-                onChange={handleInputChange}
-                placeholder="Enter your email address"
-              />
-            </Form.Group>
+  <Form.Group className="mb-3">
+    <Form.Label>Your Message *</Form.Label>
+    <Form.Control
+      as="textarea"
+      rows={4}
+      name="message"
+      required
+      value={requestForm.message}
+      onChange={(e) => setRequestForm({ message: e.target.value })}
+      placeholder="Describe your legal issue..."
+    />
+  </Form.Group>
+</Modal.Body>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Phone Number *</Form.Label>
-              <Form.Control 
-                type="tel" 
-                name="phone"
-                required 
-                value={requestForm.phone}
-                onChange={handleInputChange}
-                placeholder="Enter your phone number"
-                pattern="[0-9]{10}"
-              />
-              <Form.Text className="text-muted">
-                Must be a 10-digit number
-              </Form.Text>
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Address *</Form.Label>
-              <Form.Control 
-                as="textarea" 
-                rows={2}
-                name="address"
-                required 
-                value={requestForm.address}
-                onChange={handleInputChange}
-                placeholder="Enter your complete address"
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>What do you need consultation about? *</Form.Label>
-              <Form.Control 
-                as="textarea" 
-                rows={3}
-                name="consultationAbout"
-                required 
-                value={requestForm.consultationAbout}
-                onChange={handleInputChange}
-                placeholder="Describe your legal issue"
-              />
-            </Form.Group>
-          </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={() => setShowRequestModal(false)}>
               Cancel

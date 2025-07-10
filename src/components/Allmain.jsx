@@ -17,6 +17,8 @@ import CaseHistory from "../Pages/user/CaseHistory.jsx";
 import UserHistory from "../Pages/Admin/UserHistory.jsx";
 import LawyerHistory from "../Pages/Admin/LawyerHistory.jsx";
 import LawyerProfile from "../Pages/lawyer/Lawyer_Profile.jsx";
+import Mybooking from "../Pages/lawyer/Mybooking.jsx";
+import ClientRequests from "../Pages/lawyer/ClientRequest.jsx";
 import "./main.css";
 
 const Allmain = () => {
@@ -35,7 +37,9 @@ const Allmain = () => {
       "/user/FindLawyer": "Find Lawyer",
       "/user/CaseHistory": "Case History",
       "/lawyer/history":"Lawyer History",
-       "/user/history":"User History"
+       "/user/history":"User History",
+      " /lawyer/Mybooking": "My Booking",
+      " /lawyer/ClientRquest": "Client Request",
     };
 
     const title = routeToTitle[location.pathname];
@@ -65,7 +69,11 @@ style={{ background: "#f9f7f1", minHeight: "100vh" }}
           <Route path="/user/FindLawyer" element={<AuthRoute> <FindLawyer /> </AuthRoute>} />
           <Route path="/user/CaseHistory" element={<AuthRoute> <CaseHistory /> </AuthRoute>} />
           <Route path="/lawyer/history" element={<AuthRoute> <LawyerHistory/> </AuthRoute>} />
+          <Route path="/lawyer/Mybooking" element={<AuthRoute> <Mybooking/> </AuthRoute>} />
+          <Route path="/lawyer/ClientRquest" element={<AuthRoute> <ClientRequests/> </AuthRoute>} />
+           
            <Route path="/user/history" element={<AuthRoute> <UserHistory/> </AuthRoute>} />
+           
            <Route path="/lawyer/Lawyer_Profile" element={<AuthRoute> <LawyerProfile/> </AuthRoute>} />
           <Route path="/logout" element={<Logout />} />
         </Routes>

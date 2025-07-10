@@ -143,7 +143,7 @@ function Mybooking() {
                     <th>User ID</th>
                     <th>Booking Id</th>
                     <th>Mode</th>
-                    <th>Action</th>
+                    {/* <th>Action</th> */}
                   </tr>
                 </thead>
                 <tbody>
@@ -160,7 +160,7 @@ function Mybooking() {
                       <td>{booking._id}</td>
                       <td>{getModeBadge(booking.mode)}</td>
                       <td>
-                        <div className="action-buttons">
+                        {/* <div className="action-buttons">
                           <button
                             className="accept-button"
                             onClick={() => handleStatusUpdate(booking._id, 'accepted')}
@@ -173,7 +173,7 @@ function Mybooking() {
                           >
                             Reject
                           </button>
-                        </div>
+                        </div> */}
                       </td>
                     </motion.tr>
                   ))}
