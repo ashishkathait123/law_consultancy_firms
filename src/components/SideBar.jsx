@@ -111,6 +111,13 @@ const SideBar = () => {
         {/* Lawyer Specific Items */}
         {role === "lawyer" && (
           <>
+          <li className="nav-item">
+              <Link className="nav-link" to="/lawyer/dashboard">
+                <FaChartBar size={20} />
+                <span>Dashboard</span>
+              </Link>
+            </li>
+
             <li className="nav-item">
               <div
                 className={`nav-link ${dropdowns.clients ? "" : "collapsed"}`}
