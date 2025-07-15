@@ -138,8 +138,9 @@
 /* Messages Area */
 .legal-chat-messages {
   flex: 1;
-  padding: 20px;
+padding: 20px;
   overflow-y: auto;
+    overflow-y: auto;
   background-color: #f8f9fa;
   background-image: 
     linear-gradient(#f1f5f9 1px, transparent 1px),
@@ -342,4 +343,11 @@
   .empty-chat {
     padding: 15px;
   }
+}
+.legal-message.client {
+  background-color: #f0fff4;
+}
+
+.legal-message.lawyer {
+  background-color: #e8f0ff;
 }

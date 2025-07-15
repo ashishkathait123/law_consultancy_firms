@@ -29,6 +29,7 @@ import Stats from "./Stats";
 import Livechat from "./liveChate";
 import ChatBox from "../../components/ChatBox";
 
+// ✅ Custom hook to fetch lawyer profile and stats
 const useLawyerData = () => {
   const [data, setData] = useState({
     lawyer: null,
@@ -82,6 +83,7 @@ const useLawyerData = () => {
   return data;
 };
 
+// ✅ Profile card component
 const ProfileCard = ({ lawyer, stats }) => {
   const theme = useTheme();
 
@@ -99,9 +101,7 @@ const ProfileCard = ({ lawyer, stats }) => {
         >
           {lawyer.name.charAt(0).toUpperCase()}
         </Avatar>
-        <Typography variant="h5" fontWeight="bold">
-          {lawyer.name}
-        </Typography>
+        <Typography variant="h5" fontWeight="bold">{lawyer.name}</Typography>
         <Typography variant="subtitle1" color="text.secondary">
           {lawyer.specialization}
         </Typography>
@@ -178,13 +178,14 @@ const ProfileCard = ({ lawyer, stats }) => {
   );
 };
 
+// ✅ Main LawyerDashboard component
 const LawyerDashboard = () => {
   const { lawyer, stats, loading, error } = useLawyerData();
   const [notificationData, setNotificationData] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [startChat, setStartChat] = useState(false);
   const [chatSessionData, setChatSessionData] = useState(null);
-  const socketRef = useRef(null);
+  const [socketReady, setSocketReady] = useState(false);
   const theme = useTheme();
 
   const handleLogout = () => {
@@ -194,9 +195,22 @@ const LawyerDashboard = () => {
     window.location.href = "/login";
   };
 
+  const waitForSocketConnection = () => {
+    return new Promise(resolve => {
+      const interval = setInterval(() => {
+        const socket = getSocket();
+        if (socket && socket.connected) {
+          clearInterval(interval);
+          resolve(true);
+        }
+      }, 100);
+    });
+  };
+
   const updateBookingStatus = async (bookingId, status) => {
     const token = sessionStorage.getItem('token');
     const userData = JSON.parse(sessionStorage.getItem('userData'));
+
     try {
       const res = await fetch(`https://lawyerbackend-qrqa.onrender.com/lawapi/common/bookings/${bookingId}`, {
         method: 'PUT',
@@ -207,34 +221,21 @@ const LawyerDashboard = () => {
         body: JSON.stringify({ status })
       });
 
-      const resultText = await res.text();
-      const result = JSON.parse(resultText);
+      const result = await res.json();
 
       if (res.ok) {
         console.log(`✅ Booking ${status} successfully:`, result);
 
         if (status === 'accepted') {
-          const socket = getSocket();
           const userId = notificationData?.userId;
+          const duration = 15 * 60;
 
-          socket.emit('booking-accepted', {
-            bookingId,
-            lawyerId: userData.lawyerId,
-            userId,
-          });
-
-          socket.emit('session-started', {
-            bookingId,
-            duration: 15 * 60,
-          });
-
-          setChatSessionData({
-            bookingId,
-            userId,
-            duration: 15 * 60
-          });
-
-          setStartChat(true); // Show ChatBox
+          await waitForSocketConnection();
+setChatSessionData({ bookingId, userId, duration, client: {
+  name: notificationData.name,
+  userId: notificationData.userId,
+}});
+          setStartChat(true);
         }
       } else {
         console.error(`❌ Booking ${status} failed:`, result.message || result);
@@ -248,9 +249,21 @@ const LawyerDashboard = () => {
     if (!show || !data) return null;
 
     const handleAccept = async () => {
-      await updateBookingStatus(data.bookingId, 'accepted');
-      onClose();
-    };
+  await updateBookingStatus(data.bookingId, 'accepted');
+
+  setChatSessionData({
+    bookingId: data.bookingId,
+    userId: data.userId,
+    duration: 15 * 60,
+    client: {
+      name: data.name,
+      userId: data.userId,
+    }
+  });
+
+  onClose();
+};
+
 
     const handleReject = async () => {
       await updateBookingStatus(data.bookingId, 'rejected');
@@ -281,13 +294,16 @@ const LawyerDashboard = () => {
     if (!authToken || !userData?.lawyerId) return;
 
     const socket = initSocket(authToken, userData.lawyerId, 'lawyer');
-    socketRef.current = socket;
 
     socket.on('connect', () => {
+      console.log("✅ Socket connected");
       socket.emit('join-lawyer', userData.lawyerId);
+      setSocketReady(true);
     });
 
     socket.on('booking-notification', (data) => {
+        console.log("📥 Booking notification received:", data);
+
       setNotificationData({
         bookingId: data.bookingId,
         name: data.userName,
@@ -338,27 +354,61 @@ const LawyerDashboard = () => {
     );
   }
 
+  const sessionToken = sessionStorage.getItem("token");
+  const normalizedUser = {
+    ...lawyer,
+    userId: lawyer.lawyerId || lawyer._id,
+    role: 'lawyer',
+  };
+
+  const isChatReady =
+    startChat &&
+    socketReady &&
+    sessionToken &&
+    normalizedUser.userId &&
+    chatSessionData;
+
   return (
     <Paper sx={{ minHeight: "100vh", borderRadius: 0 }}>
-      {startChat ? (
+      {isChatReady ? (
         <ChatBox
-          sessionToken={sessionStorage.getItem('token')}
-          chatDuration={chatSessionData.duration}
-          lawyer={lawyer}
-          bookingId={chatSessionData.bookingId}
-        />
+        
+  sessionToken={sessionToken}
+  chatDuration={chatSessionData.duration}
+  lawyer={lawyer}
+  client={chatSessionData.client} // ✅ Add this line
+  bookingId={chatSessionData.bookingId}
+  role="lawyer"
+  currentUser={normalizedUser}
+  onReady={() => {
+    const socket = getSocket();
+    const userId = chatSessionData.userId;
+    const bookingId = chatSessionData.bookingId;
+    const userData = JSON.parse(sessionStorage.getItem('userData'));
+
+    console.log("🚀 ChatBox is ready, about to emit booking-accepted");
+
+    socket.emit('booking-accepted', {
+      bookingId,
+      lawyerId: userData.lawyerId,
+      userId,
+    });
+console.log("🔐 sessionToken (about to be passed to ChatBox):", sessionToken);
+
+    console.log("✅ Emitted booking-accepted AFTER ChatBox joined");
+  }}
+/>
+
       ) : (
         <>
           <Livechat />
           <Box sx={{ p: { xs: 2, md: 4 } }}>
             <Header lawyerName={lawyer.name} onLogout={handleLogout} />
             <Stats stats={stats} theme={theme} />
-
             <Grid container spacing={3} sx={{ mt: 2 }}>
               <Grid item xs={12} md={5} lg={4}>
                 <ProfileCard lawyer={lawyer} stats={stats} />
               </Grid>
-
               <Grid item xs={12} md={7} lg={8}>
                 <Paper elevation={3} sx={{ p: 3, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Typography variant="h6" color="text.secondary">

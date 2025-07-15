@@ -1,21 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import LawyerCard from './LawyerCard';
-import LawyerProfileModal from './LawyerProfileModal';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import LawyerCard from "./LawyerCard";
+import LawyerProfileModal from "./LawyerProfileModal";
 const specializationOptions = [
-  "Criminal Law", "Civil Law", "Corporate Law", "Family Law", "Intellectual Property",
-  "Cyber Law", "Tax Law", "Environmental Law", "Constitutional Law", "Labor Law", "caljla"
+  "Criminal Law",
+  "Civil Law",
+  "Corporate Law",
+  "Family Law",
+  "Intellectual Property",
+  "Cyber Law",
+  "Tax Law",
+  "Environmental Law",
+  "Constitutional Law",
+  "Labor Law",
+  "caljla",
 ];
 
 const stateCityOptions = {
-  "Uttarakhand": ["Dehradun", "Haridwar", "Nainital", "new tehri"],
-  "Delhi": ["New Delhi", "Dwarka", "Saket"],
+  Uttarakhand: ["Dehradun", "Haridwar", "Nainital", "new tehri"],
+  Delhi: ["New Delhi", "Dwarka", "Saket"],
   "Uttar Pradesh": ["Lucknow", "Noida", "Kanpur"],
-  "Maharashtra": ["Mumbai", "Pune", "Nagpur"],
-  "Karnataka": ["Bengaluru", "Mysuru", "Hubli"]
+  Maharashtra: ["Mumbai", "Pune", "Nagpur"],
+  Karnataka: ["Bengaluru", "Mysuru", "Hubli"],
 };
 
 const FindLawyer = () => {
@@ -23,15 +32,15 @@ const FindLawyer = () => {
   const [filteredLawyers, setFilteredLawyers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState({
-    specialization: '',
-    state: '',
-    city: ''
+    specialization: "",
+    state: "",
+    city: "",
   });
 
   const [selectedLawyer, setSelectedLawyer] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
-const handleViewProfile = (lawyer) => {
+  const handleViewProfile = (lawyer) => {
     setSelectedLawyer(lawyer);
     setShowModal(true);
   };
@@ -40,7 +49,9 @@ const handleViewProfile = (lawyer) => {
   useEffect(() => {
     const fetchLawyers = async () => {
       try {
-        const res = await axios.get('https://lawyerbackend-qrqa.onrender.com/lawapi/common/lwayerlist');
+        const res = await axios.get(
+          "https://lawyerbackend-qrqa.onrender.com/lawapi/common/lwayerlist"
+        );
         if (res.data && Array.isArray(res.data.data)) {
           const allLawyers = res.data.data;
           setLawyers(allLawyers);
@@ -62,14 +73,17 @@ const handleViewProfile = (lawyer) => {
     let results = [...lawyers];
 
     if (filters.specialization) {
-      results = results.filter(l =>
-        l.specialization?.toLowerCase().trim() === filters.specialization.toLowerCase().trim()
+      results = results.filter(
+        (l) =>
+          l.specialization?.toLowerCase().trim() ===
+          filters.specialization.toLowerCase().trim()
       );
     }
 
     if (filters.city) {
-      results = results.filter(l =>
-        l.city?.toLowerCase().trim() === filters.city.toLowerCase().trim()
+      results = results.filter(
+        (l) =>
+          l.city?.toLowerCase().trim() === filters.city.toLowerCase().trim()
       );
     }
 
@@ -78,25 +92,28 @@ const handleViewProfile = (lawyer) => {
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
       [name]: value,
-      ...(name === 'state' ? { city: '' } : {}) // Reset city if state changes
+      ...(name === "state" ? { city: "" } : {}), // Reset city if state changes
     }));
   };
 
   const resetFilters = () => {
     setFilters({
-      specialization: '',
-      state: '',
-      city: ''
+      specialization: "",
+      state: "",
+      city: "",
     });
     setFilteredLawyers(lawyers);
   };
 
   if (isLoading) {
     return (
-      <div className="d-flex justify-content-center align-items-center" style={{ height: '80vh' }}>
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ height: "80vh" }}
+      >
         <div className="spinner-border text-primary" role="status">
           <span className="visually-hidden">Loading...</span>
         </div>
@@ -114,7 +131,9 @@ const handleViewProfile = (lawyer) => {
         <div className="card-body">
           <div className="row g-3">
             <div className="col-md-4">
-              <label htmlFor="specialization" className="form-label">Specialization</label>
+              <label htmlFor="specialization" className="form-label">
+                Specialization
+              </label>
               <select
                 id="specialization"
                 name="specialization"
@@ -124,7 +143,9 @@ const handleViewProfile = (lawyer) => {
               >
                 <option value="">All Specializations</option>
                 {specializationOptions.map((spec, idx) => (
-                  <option key={idx} value={spec}>{spec}</option>
+                  <option key={idx} value={spec}>
+                    {spec}
+                  </option>
                 ))}
               </select>
             </div>
@@ -144,7 +165,7 @@ const handleViewProfile = (lawyer) => {
                 ))}
               </select>
             </div> */}
-{/* 
+            {/* 
             <div className="col-md-4">
               <label htmlFor="city" className="form-label">City</label>
               <select
@@ -164,7 +185,10 @@ const handleViewProfile = (lawyer) => {
             </div> */}
 
             <div className="col-12 text-center">
-              <button onClick={resetFilters} className="btn btn-outline-secondary me-2">
+              <button
+                onClick={resetFilters}
+                className="btn btn-outline-secondary me-2"
+              >
                 Reset Filters
               </button>
             </div>
@@ -174,32 +198,37 @@ const handleViewProfile = (lawyer) => {
 
       {/* Result Count */}
       <div className="mb-3">
-        <h5>{filteredLawyers.length} {filteredLawyers.length === 1 ? 'Lawyer' : 'Lawyers'} Found</h5>
+        <h5>
+          {filteredLawyers.length}{" "}
+          {filteredLawyers.length === 1 ? "Lawyer" : "Lawyers"} Found
+        </h5>
       </div>
 
       {/* Lawyer Cards */}
       <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
         {filteredLawyers.length > 0 ? (
-          filteredLawyers.map(lawyer => (
+          filteredLawyers.map((lawyer) => (
             <div key={lawyer._id} className="col">
-              <LawyerCard lawyer={lawyer} 
-                              onViewProfile={() => handleViewProfile(lawyer)} 
-/>
+              <LawyerCard
+                lawyer={lawyer}
+                onViewProfile={() => handleViewProfile(lawyer)}
+              />
             </div>
           ))
         ) : (
           <div className="col-12">
-            <div className="alert alert-warning text-center">No lawyers found matching your criteria</div>
+            <div className="alert alert-warning text-center">
+              No lawyers found matching your criteria
+            </div>
           </div>
         )}
-
       </div>
-       {/* Lawyer Profile Modal */}
+      {/* Lawyer Profile Modal */}
       {selectedLawyer && (
-        <LawyerProfileModal 
-          show={showModal} 
-          handleClose={() => setShowModal(false)} 
-          lawyer={selectedLawyer} 
+        <LawyerProfileModal
+          show={showModal}
+          handleClose={() => setShowModal(false)}
+          lawyer={selectedLawyer}
         />
       )}
     </div>

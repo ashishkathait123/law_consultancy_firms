@@ -117,7 +117,12 @@ const SideBar = () => {
                 <span>Dashboard</span>
               </Link>
             </li>
-
+ <li className="nav-item">
+              <Link className="nav-link" to="/lawyer/Lawyer_Profile">
+                <FaUserTie size={20} />
+                <span>Profile</span>
+              </Link>
+            </li>
             <li className="nav-item">
               <div
                 className={`nav-link ${dropdowns.clients ? "" : "collapsed"}`}
@@ -134,14 +139,14 @@ const SideBar = () => {
               </ul>
             </li>
 
-            <li className="nav-item">
+            {/* <li className="nav-item">
               <Link className="nav-link" to="/my-cases">
                 <FaGavel size={20} />
                 <span>My Cases</span>
               </Link>
-            </li>
+            </li> */}
 
-            <li className="nav-item">
+            {/* <li className="nav-item">
               <div
                 className={`nav-link ${dropdowns.documents ? "" : "collapsed"}`}
                 onClick={() => toggleDropdown("documents")}
@@ -155,21 +160,21 @@ const SideBar = () => {
                 <li><Link to="/documents/templates"><i className="bi bi-circle" /> Templates</Link></li>
                 <li><Link to="/documents/upload"><i className="bi bi-circle" /> Upload Documents</Link></li>
               </ul>
-            </li>
+            </li> */}
 
-            <li className="nav-item">
+            {/* <li className="nav-item">
               <Link className="nav-link" to="/calendar">
                 <FaCalendarAlt size={20} />
                 <span>Calendar</span>
               </Link>
-            </li>
+            </li> */}
 
-            <li className="nav-item">
+            {/* <li className="nav-item">
               <Link className="nav-link" to="/billing">
                 <FaMoneyBillWave size={20} />
                 <span>Billing</span>
               </Link>
-            </li>
+            </li> */}
 
             <li className="nav-item">
               <Link className="nav-link" to="/lawyer/Mybooking">
@@ -178,38 +183,45 @@ const SideBar = () => {
               </Link>
             </li>
 
-            <li className="nav-item">
-              <Link className="nav-link" to="/lawyer/Lawyer_Profile">
-                <FaUserTie size={20} />
-                <span>Profile</span>
-              </Link>
-            </li>
+           
           </>
         )}
 
         {/* User (Customer) Specific Items */}
         {role === "user" && (
           <>
+          <li className="nav-item">
+              <Link className="nav-link" to="/user/dashboard">
+                <FaChartBar size={20} />
+                <span>Dashboard</span>
+              </Link>
+            </li>
+           <li className="nav-item">
+              <Link className="nav-link" to="/user/FindLawyer">
+                <FaGavel size={20} />
+                <span>Find a Lawyer</span>
+              </Link>
+            </li>
             <li className="nav-item">
-              <Link className="nav-link" to="/my-requests">
+              <Link className="nav-link" to="/user/myrequest">
                 <FaClipboardList size={20} />
                 <span>My Requests</span>
               </Link>
             </li>
 
-            <li className="nav-item">
+            {/* <li className="nav-item">
               <Link className="nav-link" to="/my-lawyers">
                 <FaUserTie size={20} />
                 <span>My Lawyers</span>
               </Link>
-            </li>
+            </li> */}
 
-            <li className="nav-item">
+            {/* <li className="nav-item">
               <Link className="nav-link" to="/my-documents">
                 <FaFileContract size={20} />
                 <span>My Documents</span>
               </Link>
-            </li>
+            </li> */}
 
             <li className="nav-item">
               <Link className="nav-link" to="/user/CaseHistory">
@@ -218,12 +230,7 @@ const SideBar = () => {
               </Link>
             </li>
 
-            <li className="nav-item">
-              <Link className="nav-link" to="/user/FindLawyer">
-                <FaGavel size={20} />
-                <span>Find a Lawyer</span>
-              </Link>
-            </li>
+           
 
             <li className="nav-item">
               <Link className="nav-link" to="/user/profile">
@@ -235,12 +242,12 @@ const SideBar = () => {
         )}
 
         {/* Common Items */}
-        <li className="nav-item">
+        {/* <li className="nav-item">
           <Link className="nav-link" to="/help">
             <i className="bi bi-question-circle" />
             <span>Help</span>
           </Link>
-        </li>
+        </li> */}
 
         <li className="nav-item">
           <Link className="nav-link" to="/logout">

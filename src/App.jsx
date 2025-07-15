@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ForgetPassword from "./Pages/ForgetPassword";
 import AuthPage from "./Pages/AuthPage";
 import Allmain from "./components/Allmain";
-
+import 'react-toastify/dist/ReactToastify.css';
 function App() {
   return (
     <BrowserRouter>

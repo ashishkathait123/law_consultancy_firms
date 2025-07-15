@@ -112,7 +112,12 @@ const PaymentModal = ({ show, handleClose, serviceType, lawyer, onPaymentSuccess
         }
 
         if (onPaymentSuccess) {
-          onPaymentSuccess({ sessionToken: token, durationMinutes: duration, paymentId: razorpay_payment_id });
+onPaymentSuccess({
+  sessionToken: token,
+  durationMinutes: duration,
+  paymentId: razorpay_payment_id,
+  bookingId: bookingId,  // ✅ ADD THIS
+});
         }
       } else {
         alert(`Payment verification failed: ${verifyData.message}`);
@@ -205,17 +210,26 @@ const PaymentModal = ({ show, handleClose, serviceType, lawyer, onPaymentSuccess
         </Modal.Header>
        <Modal.Body style={{ padding: 0, height: '100vh', overflow: 'hidden' }}>
   {sessionToken && bookingId && lawyer && duration && currentUser?._id ? (
-    <ChatBox
-      sessionToken={sessionToken}
-      chatDuration={duration}
-      lawyer={lawyer}
-      bookingId={bookingId}
-    />
+ 
+ <ChatBox
+  sessionToken={sessionToken}
+  chatDuration={duration}
+  lawyer={lawyer}
+  bookingId={bookingId}
+  role="client"
+  currentUser={currentUser}
+    authToken={sessionStorage.getItem('token')} // ✅ This is the JWT
+
+/>
+
+
   ) : (
     <div className="d-flex justify-content-center align-items-center h-100">
       <div className="text-muted">🔄 Setting up secure chat...</div>
     </div>
+    
   )}
+  
 </Modal.Body>
 
       </Modal>

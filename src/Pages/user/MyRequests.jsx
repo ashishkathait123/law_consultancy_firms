@@ -4,7 +4,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Table, Badge, Button, Modal, Card, Stack, Dropdown, Form, Pagination } from "react-bootstrap";
 
-const ClientRequests = () => {
+const MyRequests = () => {
   const [requests, setRequests] = useState([]);
   const [filteredRequests, setFilteredRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -15,42 +15,42 @@ const ClientRequests = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [requestsPerPage] = useState(10);
 
-  useEffect(() => {
-    const fetchRequests = async () => {
-      try {
-        const token = sessionStorage.getItem("token");
-        const lawyerData = JSON.parse(sessionStorage.getItem("userData"));
-        const lawyerId = lawyerData?.lawyerId || lawyerData?._id;
+useEffect(() => {
+  const fetchRequests = async () => {
+    try {
+      const token = sessionStorage.getItem("token");
+      const userData = JSON.parse(sessionStorage.getItem("userData"));
+      const userId = userData?.userId || userData?._id;
 
-        const res = await axios.get(
-          `https://lawyerbackend-qrqa.onrender.com/lawapi/common/lawyerrequest/${lawyerId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (res.data?.success && Array.isArray(res.data.requests)) {
-          const normalized = res.data.requests.map((r) => ({
-            ...r,
-            status: r.status === "send" ? "pending" : r.status,
-          }));
-          setRequests(normalized);
-          setFilteredRequests(normalized);
-        } else {
-          toast.error("Invalid response from server");
+      const res = await axios.get(
+        `https://lawyerbackend-qrqa.onrender.com/lawapi/common/userrequest/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-      } catch (err) {
-        console.error("Fetch error:", err);
-        toast.error("Error fetching client requests");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      );
 
-    fetchRequests();
-  }, []);
+      console.log("Fetched requests:", res.data);
+
+      if (res.data?.success && Array.isArray(res.data.requests)) {
+        setRequests(res.data.requests);
+        setFilteredRequests(res.data.requests);
+      } else {
+        toast.error("Invalid response format from server");
+      }
+    } catch (err) {
+      console.error("Fetch error:", err);
+      toast.error("Error fetching your requests");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  fetchRequests();
+}, []);
+
+
 
   // Apply filters and search
   useEffect(() => {
@@ -62,8 +62,8 @@ const ClientRequests = () => {
       const query = searchQuery.toLowerCase();
       result = result.filter(
         (r) =>
-          (r.userName && r.userName.toLowerCase().includes(query)) ||
-          (r.userEmail && r.userEmail.toLowerCase().includes(query)) ||
+          (r.lawyerName && r.lawyerName.toLowerCase().includes(query)) ||
+          (r.lawyerEmail && r.lawyerEmail.toLowerCase().includes(query)) ||
           (r.message && r.message.toLowerCase().includes(query))
       );
     }
@@ -85,29 +85,6 @@ const ClientRequests = () => {
     setShowModal(true);
   };
 
-  const handleStatusUpdate = async (requestId, newStatus) => {
-    try {
-      const token = localStorage.getItem("token");
-      await axios.put(
-        `https://lawyerbackend-qrqa.onrender.com/lawapi/common/lawyerrequest/${requestId}`,
-        { status: newStatus },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      setRequests((prev) =>
-        prev.map((r) => (r._id === requestId ? { ...r, status: newStatus } : r))
-      );
-      toast.success("Status updated successfully");
-    } catch (err) {
-      console.error("Update error:", err);
-      toast.error("Failed to update status");
-    }
-  };
-
   const getStatusBadge = (status) => {
     switch (status) {
       case "pending":
@@ -116,12 +93,12 @@ const ClientRequests = () => {
         return <Badge bg="success">Accepted</Badge>;
       case "rejected":
         return <Badge bg="danger">Rejected</Badge>;
+      case "completed":
+        return <Badge bg="info">Completed</Badge>;
       default:
-        return <Badge bg="secondary">Unknown</Badge>;
+        // return <Badge bg="secondary">Unknown</Badge>;
     }
   };
-
-  const isPending = (status) => status === "pending";
 
   if (isLoading) {
     return (
@@ -138,7 +115,7 @@ const ClientRequests = () => {
       <ToastContainer position="top-center" />
       
       <div className="d-flex justify-content-between align-items-center flex-wrap mb-3">
-        <h1 className="h4 mb-2 mb-md-0">Client Requests</h1>
+        <h1 className="h4 mb-2 mb-md-0">Your Requests to Lawyers</h1>
         <div className="d-flex align-items-center">
           <span className="me-2 d-none d-md-inline">Total:</span>
           <Badge bg="info" pill>{filteredRequests.length}</Badge>
@@ -151,7 +128,7 @@ const ClientRequests = () => {
           <div className="col-md-6">
             <Form.Control
               type="text"
-              placeholder="Search by name or message..."
+              placeholder="Search by lawyer name or message..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -163,7 +140,7 @@ const ClientRequests = () => {
                   {statusFilter === "all" ? "All Statuses" : statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}
                 </Dropdown.Toggle>
                 <Dropdown.Menu>
-                  {["all", "pending", "accepted", "rejected"].map((filter) => (
+                  {["all", "pending", "accepted", "rejected", "completed"].map((filter) => (
                     <Dropdown.Item 
                       key={filter}
                       active={statusFilter === filter}
@@ -186,52 +163,32 @@ const ClientRequests = () => {
             <Table striped bordered hover responsive className="mb-3">
               <thead className="table-light">
                 <tr>
-                  <th>Client</th>
-                  {/* <th>Email</th> */}
-                  <th>Status</th>
+                  <th>Lawyer</th>
+                  {/* <th>Status</th> */}
                   <th>Message Preview</th>
+                  <th>Date</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {currentRequests.map((req) => (
                   <tr key={req._id}>
-                    <td>{req.userName || "N/A"}</td>
-                    {/* <td>{req.userEmail || "N/A"}</td> */}
-                    <td>{getStatusBadge(req.status)}</td>
+                    <td>{req.lawyerName || "N/A"}</td>
+                    {/* <td>{getStatusBadge(req.status)}</td> */}
                     <td>
                       {req.message.length > 50
                         ? `${req.message.substring(0, 50)}...`
                         : req.message}
                     </td>
+                    <td>{new Date(req.createdAt).toLocaleDateString()}</td>
                     <td>
-                      <Stack direction="horizontal" gap={2}>
-                        <Button
-                          variant="outline-info"
-                          size="sm"
-                          onClick={() => handleViewDetails(req)}
-                        >
-                          View
-                        </Button>
-                        {isPending(req.status) && (
-                          <>
-                            {/* <Button
-                              variant="outline-success"
-                              size="sm"
-                              onClick={() => handleStatusUpdate(req._id, "accepted")}
-                            >
-                              Accept
-                            </Button>
-                            <Button
-                              variant="outline-danger"
-                              size="sm"
-                              onClick={() => handleStatusUpdate(req._id, "rejected")}
-                            >
-                              Reject
-                            </Button> */}
-                          </>
-                        )}
-                      </Stack>
+                      <Button
+                        variant="outline-info"
+                        size="sm"
+                        onClick={() => handleViewDetails(req)}
+                      >
+                        View
+                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -275,7 +232,7 @@ const ClientRequests = () => {
             )}
           </>
         ) : (
-          <div className="alert alert-info">No client requests found.</div>
+          <div className="alert alert-info">No requests found.</div>
         )}
       </div>
 
@@ -287,42 +244,26 @@ const ClientRequests = () => {
               <Card key={req._id} className="mb-3 shadow-sm">
                 <Card.Body>
                   <div className="d-flex justify-content-between align-items-start mb-2">
-                    <Card.Title className="h6 mb-0">{req.userName || "N/A"}</Card.Title>
+                    <Card.Title className="h6 mb-0">{req.lawyerName || "N/A"}</Card.Title>
                     {getStatusBadge(req.status)}
                   </div>
-                  {/* <Card.Subtitle className="mb-2 text-muted small">{req.userEmail || "N/A"}</Card.Subtitle> */}
+                  <Card.Subtitle className="mb-2 text-muted small">
+                    {new Date(req.createdAt).toLocaleDateString()}
+                  </Card.Subtitle>
                   <Card.Text className="mb-3">
                     {req.message.length > 100
                       ? `${req.message.substring(0, 100)}...`
                       : req.message}
                   </Card.Text>
-                  <Stack direction="horizontal" gap={2} className="justify-content-between">
+                  <div className="d-grid">
                     <Button
                       variant="outline-primary"
                       size="sm"
                       onClick={() => handleViewDetails(req)}
                     >
-                      Details
+                      View Details
                     </Button>
-                    {isPending(req.status) && (
-                      <Stack direction="horizontal" gap={2}>
-                        {/* <Button
-                          variant="outline-success"
-                          size="sm"
-                          onClick={() => handleStatusUpdate(req._id, "accepted")}
-                        >
-                          Accept
-                        </Button>
-                        <Button
-                          variant="outline-danger"
-                          size="sm"
-                          onClick={() => handleStatusUpdate(req._id, "rejected")}
-                        >
-                          Reject
-                        </Button> */}
-                      </Stack>
-                    )}
-                  </Stack>
+                  </div>
                 </Card.Body>
               </Card>
             ))}
@@ -355,7 +296,7 @@ const ClientRequests = () => {
             )}
           </>
         ) : (
-          <div className="alert alert-info">No client requests found.</div>
+          <div className="alert alert-info">No requests found.</div>
         )}
       </div>
 
@@ -368,59 +309,42 @@ const ClientRequests = () => {
           {selectedRequest && (
             <div>
               <div className="mb-3">
-                <h6 className="text-muted">Client Information</h6>
-                <p><strong>Name:</strong> {selectedRequest.userName}</p>
-                {/* <p><strong>Email:</strong> {selectedRequest.userEmail}</p> */}
-                <p><strong>Status:</strong> {getStatusBadge(selectedRequest.status)}</p>
+                <h6 className="text-muted">Lawyer Information</h6>
+                <p><strong>Name:</strong> {selectedRequest.lawyerName || "N/A"}</p>
+                {/* <p><strong>Status:</strong> {getStatusBadge(selectedRequest.status)}</p> */}
+                <p><strong>Date Sent:</strong> {new Date(selectedRequest.createdAt).toLocaleString()}</p>
               </div>
               
               <div className="mb-3">
-                <h6 className="text-muted">Message</h6>
+                <h6 className="text-muted">Your Message</h6>
                 <div className="p-3 bg-light rounded">
                   {selectedRequest.message}
                 </div>
               </div>
+
+              {selectedRequest.response && (
+                <div className="mb-3">
+                  <h6 className="text-muted">Lawyer's Response</h6>
+                  <div className="p-3 bg-light rounded">
+                    {selectedRequest.response}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </Modal.Body>
         <Modal.Footer>
-          <Stack direction="horizontal" gap={2} className="w-100">
-            {selectedRequest && isPending(selectedRequest.status) && (
-              <>
-                <Button
-                  variant="success"
-                  onClick={() => {
-                    handleStatusUpdate(selectedRequest._id, "accepted");
-                    setShowModal(false);
-                  }}
-                  className="flex-grow-1"
-                >
-                  Accept Request
-                </Button>
-                <Button
-                  variant="danger"
-                  onClick={() => {
-                    handleStatusUpdate(selectedRequest._id, "rejected");
-                    setShowModal(false);
-                  }}
-                  className="flex-grow-1"
-                >
-                  Reject Request
-                </Button>
-              </>
-            )}
-            <Button 
-              variant="outline-secondary" 
-              onClick={() => setShowModal(false)}
-              className="flex-grow-1"
-            >
-              Close
-            </Button>
-          </Stack>
+          <Button 
+            variant="outline-secondary" 
+            onClick={() => setShowModal(false)}
+            className="flex-grow-1"
+          >
+            Close
+          </Button>
         </Modal.Footer>
       </Modal>
     </div>
   );
 };
 
-export default ClientRequests;
+export default MyRequests;

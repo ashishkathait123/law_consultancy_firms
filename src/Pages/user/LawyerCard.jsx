@@ -80,7 +80,9 @@ const LawyerCard = ({ lawyer, onViewProfile }) => {
   };
 
   return (
+    
     <CardContainer>
+      
       <StatusContainer>
         {isOnline ? (
           <>
@@ -124,24 +126,24 @@ const LawyerCard = ({ lawyer, onViewProfile }) => {
         {lawyer.orderCount && <Orders>{lawyer.orderCount} orders</Orders>}
       </MiddleSection>
       
-      <BottomSection>
-        <Duration>{lawyer.duration || 30}min</Duration>
-        <ActionButtons>
-          <ViewProfileButton onClick={() => onViewProfile(lawyer)}>
-            <FaUserTie /> View Profile
-          </ViewProfileButton>
-        
-          {!isOnline ? (
-            <RequestButton onClick={() => setShowRequestModal(true)}>
-              Send Request
-            </RequestButton>
-          ) : (
-            <ChatButton onClick={() => setShowRequestModal(true)}>
-              Chat Now
-            </ChatButton>
-          )}
-        </ActionButtons>
-      </BottomSection>
+     <BottomSection>
+  <Duration>{lawyer.duration || 30}min</Duration>
+
+  <ActionButtons>
+    {isOnline ? (
+      // If lawyer is online, show only "View Profile"
+      <ViewProfileButton onClick={() => onViewProfile(lawyer)}>
+        <FaUserTie /> View Profile
+      </ViewProfileButton>
+    ) : (
+      // If lawyer is offline, show only "Send Request"
+      <RequestButton onClick={() => setShowRequestModal(true)}>
+        Send Request
+      </RequestButton>
+    )}
+  </ActionButtons>
+</BottomSection>
+
 
       {/* Request Modal */}
       <Modal show={showRequestModal} onHide={() => setShowRequestModal(false)} centered>
@@ -181,6 +183,7 @@ const LawyerCard = ({ lawyer, onViewProfile }) => {
 };
 
 // Styled components
+
 const CardContainer = styled.div`
   background: #fff;
   border-radius: 8px;
