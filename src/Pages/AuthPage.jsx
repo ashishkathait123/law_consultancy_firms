@@ -26,9 +26,9 @@ const AuthPage = () => {
     phone: '',
     password: '',
     confirmPassword: '',
-    addressline: '',
-    city: '',
-    purpose: '',
+    // addressline: '',
+    // city: '',
+    // purpose: '',
     licenseNumber: '',
     experience: '',
     specialization: ''
@@ -65,7 +65,7 @@ const AuthPage = () => {
       licenseNumber: role === 'lawyer' ? formData.licenseNumber : '',
       experience: role === 'lawyer' ? formData.experience : '',
       specialization: role === 'lawyer' ? formData.specialization : '',
-      purpose: role === 'user' ? formData.purpose : '',
+      // purpose: role === 'user' ? formData.purpose : '',
       addressline: role !== 'admin' ? formData.addressline : '',
       city: role !== 'admin' ? formData.city : ''
     });
@@ -89,10 +89,10 @@ const AuthPage = () => {
       }
     }
 
-    if (userRole === 'user' && !formData.purpose) {
-      toast.error('Please specify your purpose');
-      return false;
-    }
+    // if (userRole === 'user' && !formData.purpose) {
+    //   toast.error('Please specify your purpose');
+    //   return false;
+    // }
 
     return true;
   };
@@ -133,9 +133,9 @@ const AuthPage = () => {
         email: formData.email,
         phone: formData.phone,
         password: formData.password,
-        addressline: formData.addressline,
-        city: formData.city,
-        purpose: formData.purpose
+        // addressline: formData.addressline,
+        // city: formData.city,
+        // purpose: formData.purpose
       };
     }
 
@@ -152,9 +152,9 @@ const AuthPage = () => {
         phone: '',
         password: '',
         confirmPassword: '',
-        addressline: '',
-        city: '',
-        purpose: '',
+        // addressline: '',
+        // city: '',
+        // purpose: '',
         licenseNumber: '',
         experience: '',
         specialization: ''
@@ -429,7 +429,7 @@ console.log("Logged in user:", response.data.user);
                         </div>
                       </div>
 
-                      {(userRole === 'user' || userRole === 'lawyer') && (
+                      {/* {(userRole === 'user' || userRole === 'lawyer') && (
                         <div className="col-md-4">
                           <div className="form-group mb-2">
                             <label className="fw-bold" style={{ fontSize: '0.9rem' }}>City <span className="text-danger">*</span></label>
@@ -449,11 +449,11 @@ console.log("Logged in user:", response.data.user);
                             </div>
                           </div>
                         </div>
-                      )}
+                      )} */}
                     </div>
 
                     {/* Address Section - Full width */}
-                    {(userRole === 'user' || userRole === 'lawyer') && (
+                    {/* {(userRole === 'user' || userRole === 'lawyer') && (
                       <div className="form-group mb-2">
                         <label className="fw-bold" style={{ fontSize: '0.9rem' }}>Address</label>
                         <div className="input-group input-group-sm">
@@ -471,10 +471,10 @@ console.log("Logged in user:", response.data.user);
                           />
                         </div>
                       </div>
-                    )}
+                    )} */}
 
                     {/* Purpose Section - Full width */}
-                    {userRole === 'user' && (
+                    {/* {userRole === 'user' && (
                       <div className="form-group mb-2">
                         <label className="fw-bold" style={{ fontSize: '0.9rem' }}>Purpose <span className="text-danger">*</span></label>
                         <div className="input-group input-group-sm">
@@ -493,7 +493,7 @@ console.log("Logged in user:", response.data.user);
                           />
                         </div>
                       </div>
-                    )}
+                    )} */}
 
                     {/* Lawyer-specific Fields - 3 columns */}
                     {userRole === 'lawyer' && (
