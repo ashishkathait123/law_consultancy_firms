@@ -20,6 +20,7 @@ import Mybooking from "../Pages/lawyer/Mybooking.jsx";
 import ClientRequests from "../Pages/lawyer/ClientRequest.jsx";
 import ClientHistoryPage from "../Pages/user/ClientCaseHistory.jsx";
 import MyRequests from "../Pages/user/MyRequests.jsx";
+import AdminLawyerManagement from "../Pages/Admin/addPhysicalLawyer.jsx";
 import "./main.css";
 
 const Allmain = () => {
@@ -34,12 +35,13 @@ const Allmain = () => {
       "/lawyer/Lawyer_Profile": "Lawyer Profile",
       "/admin/lawyerManagement": "Manage Lawyers",
       "/admin/customner": "Manage Customers",
+      "/admin/add-lawyer": "add Physical Lawyer",
       "/user/profile": "Manage profile",
       "/user/FindLawyer": "Find Lawyer",
       "/user/CaseHistory": "Case History",
       "/user/myrequest": "My Requests",
       "/lawyer/history":"Lawyer History",
-       "/user/history":"User History",
+       "/user/history":"User History",
       " /lawyer/Mybooking": "My Booking",
       " /lawyer/ClientRquest": "Client Request",
     };
@@ -67,6 +69,7 @@ style={{ background: "#f9f7f1", minHeight: "100vh" }}
           <Route path="/lawyer/dashboard" element={<AuthRoute> <Lawyerdashboard /> </AuthRoute>} />
           <Route path="/admin/lawyerManagement" element={<AuthRoute> <LawyerManagement /> </AuthRoute>} />
           <Route path="/admin/customner" element={<AuthRoute> <CustomerManagement /> </AuthRoute>} />
+          <Route path="/admin/add-lawyer" element={<AuthRoute> <AdminLawyerManagement /> </AuthRoute>} />
           <Route path="/user/profile" element={<AuthRoute> <ClientProfile /> </AuthRoute>} />
           <Route path="/user/FindLawyer" element={<AuthRoute> <FindLawyer /> </AuthRoute>} />
           <Route path="/user/CaseHistory" element={<AuthRoute> <ClientHistoryPage /> </AuthRoute>} />

@@ -13,7 +13,8 @@ import {
   FaCog,
   FaCalendarAlt,
   FaMoneyBillWave,
-  FaClipboardList
+  FaClipboardList,
+  FaUserPlus
 } from "react-icons/fa";
 import { IoGridOutline } from "react-icons/io5";
 import { MdOutlineProductionQuantityLimits, MdOutlineCategory } from "react-icons/md";
@@ -59,7 +60,7 @@ const SideBar = () => {
               </Link>
             </li>
 
-            <li className="nav-item">
+            {/* <li className="nav-item">
               <div
                 className={`nav-link ${dropdowns.cases ? "" : "collapsed"}`}
                 onClick={() => toggleDropdown("cases")}
@@ -74,7 +75,7 @@ const SideBar = () => {
                 <li><Link to="/cases/active"><i className="bi bi-circle" /> Active Cases</Link></li>
                 <li><Link to="/cases/closed"><i className="bi bi-circle" /> Closed Cases</Link></li>
               </ul>
-            </li>
+            </li> */}
 
             <li className="nav-item">
               <div
@@ -93,18 +94,18 @@ const SideBar = () => {
             </li>
 
             <li className="nav-item">
-              <Link className="nav-link" to="/reports">
-                <FaChartBar size={20} />
-                <span>Reports</span>
+              <Link className="nav-link" to="/admin/add-lawyer">
+                <FaUserPlus size={20} />
+                <span>Add Physical lawyer</span>
               </Link>
             </li>
 
-            <li className="nav-item">
+            {/* <li className="nav-item">
               <Link className="nav-link" to="/settings">
                 <FaCog size={20} />
                 <span>System Settings</span>
               </Link>
-            </li>
+            </li> */}
           </>
         )}
 

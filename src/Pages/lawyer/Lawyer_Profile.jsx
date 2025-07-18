@@ -435,13 +435,37 @@ const LawyerProfile = () => {
               </div>
               <div className="form-row">
                 <div className="form-group">
-                  <label>Practice Area</label>
-                  <input name="practiceArea" value={editedData.practiceArea || ""} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
+  <label>Practice Area</label>
+  <select
+    name="practiceArea"
+    value={editedData.practiceArea || ""}
+    onChange={handleInputChange}
+    className="form-control"
+  >
+    <option value="">-- Select Practice Area --</option>
+    <option value="Tax Law">Tax Law</option>
+    <option value="Labour & Employment Law">Labour & Employment Law</option>
+    <option value="Banking & Finance Law">Banking & Finance Law</option>
+    <option value="Cyber & IT Law">Cyber & IT Law</option>
+    <option value="Environmental Law">Environmental Law</option>
+    <option value="Immigration Law">Immigration Law</option>
+    <option value="Insurance Law">Insurance Law</option>
+    <option value="Constitutional Law">Constitutional Law</option>
+    <option value="Education Law">Education Law</option>
+    <option value="Health & Medical Law">Health & Medical Law</option>
+    <option value="Election Law">Election Law</option>
+    <option value="Human Rights Law">Human Rights Law</option>
+    <option value="International Law">International Law</option>
+    <option value="Documentary Drafting & Legal Documentation">
+      Documentary Drafting & Legal Documentation
+    </option>
+  </select>
+</div>
+
+                {/* <div className="form-group">
                   <label>Consultation Fees (₹)</label>
                   <input type="number" name="consultation_fees" value={editedData.consultation_fees || ""} onChange={handleInputChange} min="0" />
-                </div>
+                </div> */}
               </div>
               <div className="form-row">
                 <div className="form-group">
