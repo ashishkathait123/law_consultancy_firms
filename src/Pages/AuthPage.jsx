@@ -6,6 +6,8 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './AuthAnimation.css';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { useNavigate } from "react-router-dom";
+import { useLocation } from 'react-router-dom';
+
 import WebNav from '../components/Web-nav/WebNav';
 const AuthPage = () => {
   const [isLoginVisible, setIsLoginVisible] = useState(false);
@@ -41,6 +43,7 @@ const AuthPage = () => {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const API_URL1 = 'https://lawyerbackend-qrqa.onrender.com/lawapi/auth';
   const API_URL = 'https://lawyerbackend-qrqa.onrender.com/lawapi/auth/register';
+const redirect = new URLSearchParams(location.search).get('redirect');
 
   // Toggle between login and registration with animation
   const toggleAuthForms = (direction) => {
@@ -187,37 +190,45 @@ const AuthPage = () => {
     setCredentials({ ...credentials, [e.target.name]: e.target.value });
   };
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    
-    try {
-      const response = await axios.post(`${API_URL1}/login`, credentials);
-      
-      if (response.data.message && response.data.message.includes('successful')) {
-        sessionStorage.setItem('token', response.data.accessToken);
-        sessionStorage.setItem('role', response.data.user?.role || credentials.role);
-        sessionStorage.setItem('userData', JSON.stringify(response.data.user));
-console.log("Logged in user:", response.data.user);
+const handleLogin = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError('');
 
-        toast.success('Login successful!');
-        const userRole = response.data.user?.role || credentials.role;
-        const targetPath = {
-          admin: '/admin/dashboard',
-          lawyer: '/lawyer/dashboard',
-          user: '/user/dashboard'
-        }[userRole.toLowerCase()] || '/';
-        navigate(targetPath);
-      } else {
-        setError(response.data.message || 'Login failed.');
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || 'Something went wrong.');
-    } finally {
-      setLoading(false);
+  try {
+    const response = await axios.post(`${API_URL1}/login`, credentials);
+
+    if (response.data.message && response.data.message.includes('successful')) {
+      sessionStorage.setItem('token', response.data.accessToken);
+      sessionStorage.setItem('role', response.data.user?.role || credentials.role);
+      sessionStorage.setItem('userData', JSON.stringify(response.data.user));
+      console.log("Logged in user:", response.data.user);
+
+      toast.success('Login successful!');
+      const userRole = response.data.user?.role || credentials.role;
+
+      // Check if there's a redirect path in the URL
+      const redirectPath = new URLSearchParams(window.location.search).get('redirect');
+
+      // Define default role-based paths
+      const targetPath = {
+        admin: '/admin/dashboard',
+        lawyer: '/lawyer/dashboard',
+        user: '/user/FindLawyer'
+      }[userRole.toLowerCase()] || '/';
+
+      // Redirect to saved redirectPath or default dashboard
+      navigate(redirectPath || targetPath);
+    } else {
+      setError(response.data.message || 'Login failed.');
     }
-  };
+  } catch (err) {
+    setError(err.response?.data?.message || 'Something went wrong.');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="auth-page" style={{
@@ -270,7 +281,7 @@ console.log("Logged in user:", response.data.user);
                 border: 'none'
               }}>
                 <div className="card-header py-3" style={{
-                  background: 'linear-gradient(to right, #283e51, #485563)',
+                  background: '#1E4D7A',
                   color: 'white'
                 }}>
                   <h3 className="text-center mb-0" style={{ fontWeight: '600', fontSize: '1.5rem' }}>
@@ -566,7 +577,7 @@ console.log("Logged in user:", response.data.user);
                         className="btn btn-primary w-100 py-2 fw-bold"
                         disabled={isSubmitting}
                         style={{
-                          background: 'linear-gradient(to right, #283e51, #485563)',
+                          background: '#1E4D7A',
                           border: 'none',
                           borderRadius: '5px',
                           fontSize: '0.9rem'
@@ -614,7 +625,7 @@ console.log("Logged in user:", response.data.user);
                 border: 'none'
               }}>
                 <div className="card-header py-3" style={{
-                  background: 'linear-gradient(to right, #283e51, #485563)',
+                  background: '#1E4D7A',
                   color: 'white'
                 }}>
                   <h3 className="text-center mb-0" style={{ fontWeight: '600', fontSize: '1.5rem' }}>
@@ -696,7 +707,7 @@ console.log("Logged in user:", response.data.user);
                         className="btn btn-primary w-100 py-2 fw-bold"
                         disabled={loading}
                         style={{
-                          background: 'linear-gradient(to right, #283e51, #485563)',
+                          background: '#1E4D7A',
                           border: 'none',
                           borderRadius: '5px',
                           fontSize: '0.9rem'

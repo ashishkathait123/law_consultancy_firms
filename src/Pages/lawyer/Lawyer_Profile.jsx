@@ -401,7 +401,7 @@ const LawyerProfile = () => {
 
       {showModal && (
         <div className="modal-overlay">
-          <div className="modal-content">
+          <div className="modal-content11">
             <h2>Edit Profile</h2>
             <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
             <form onSubmit={handleSaveProfile}>
