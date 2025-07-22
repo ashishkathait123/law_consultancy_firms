@@ -31,25 +31,27 @@ const AdminLawyerManagement = () => {
     fetchLawyers();
   }, []);
 
-  const fetchLawyers = async () => {
-    setIsLoading(true);
-    try {
-      const res = await axios.post('https://lawyerbackend-qrqa.onrender.com/lawapi/physical-lawyers/getphylawyers');
-      const data = res?.data;
-      const lawyersList = Array.isArray(data) ? data : data?.data;
-      if (Array.isArray(lawyersList)) {
-        setLawyers(lawyersList);
-      } else {
-        console.error('Unexpected response format:', data);
-        setLawyers([]);
-      }
-    } catch (err) {
-      console.error('Failed to fetch lawyers:', err);
-      setError('Error fetching lawyer data');
-    } finally {
-      setIsLoading(false);
+ const fetchLawyers = async () => {
+  setIsLoading(true);
+  try {
+    const res = await axios.get('https://lawyerbackend-qrqa.onrender.com/lawapi/physical-lawyers/getphylawyers');
+    const data = res?.data;
+    const lawyersList = Array.isArray(data) ? data : data?.data;
+
+    if (Array.isArray(lawyersList)) {
+      setLawyers(lawyersList);
+    } else {
+      console.error('Unexpected response format:', data);
+      setLawyers([]);
     }
-  };
+  } catch (err) {
+    console.error('Failed to fetch lawyers:', err);
+    setError('Error fetching lawyer data');
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -66,7 +68,7 @@ const AdminLawyerManagement = () => {
   const removeEducationField = (index) => setEducation(education.filter((_, i) => i !== index));
   const handleImageChange = (e) => setLawyerImage(e.target.files[0]);
 
- console.log('formData before submit:', formData);
+//  console.log('formData before submit:', formData);
 const handleSubmit = async (e) => {
   e.preventDefault();
 

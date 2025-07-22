@@ -212,7 +212,7 @@ const handleLogin = async (e) => {
 
       // Define default role-based paths
       const targetPath = {
-        admin: '/admin/dashboard',
+        admin: '/admin/lawyerManagement',
         lawyer: '/lawyer/dashboard',
         user: '/user/FindLawyer'
       }[userRole.toLowerCase()] || '/';
