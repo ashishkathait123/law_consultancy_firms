@@ -133,7 +133,7 @@ const LawyerCard = ({ lawyer, onViewProfile }) => {
     {isOnline ? (
       // If lawyer is online, show only "View Profile"
       <ViewProfileButton onClick={() => onViewProfile(lawyer)}>
-        <FaUserTie /> View Profile
+        <FaUserTie /> Book Now
       </ViewProfileButton>
     ) : (
       // If lawyer is offline, show only "Send Request"

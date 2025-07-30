@@ -86,7 +86,7 @@ const handleSubmit = async (e) => {
     } else {
       // ADD MODE
       const response = await axios.post(
-        'https://lawyerbackend-qrqa.onrender.com/lawapi/physical-lawyers/addlawyer',
+        'https://lawyerbackend-qrqa.onrender.com/lawapi/physical-lawyers/add-lawyer',
         payload
       );
       toast.success('Lawyer added successfully');

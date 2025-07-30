@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { Modal, Button, Tab, Tabs } from 'react-bootstrap';
 import PaymentModal from './PaymentModal';
 import ChatBox from '../../components/ChatBox';
+import Swal from 'sweetalert2';
+
+
 import {
   FaUserTie, FaStar, FaMapMarkerAlt, FaGraduationCap, FaLanguage, FaMoneyBillWave,
   FaClock, FaPhone, FaCommentDots, FaVideo, FaCheckCircle, FaTimesCircle, FaCertificate
@@ -17,22 +20,58 @@ const LawyerProfileModal = ({ show, handleClose, lawyer }) => {
     setSelectedService(serviceType);
     setShowPaymentModal(true);
   };
+const handlevideoCall = () => {
+  Swal.fire({
+    icon: 'info',
+    title: 'Coming Soon',
+    text: 'Video call feature is coming soon!',
+    confirmButtonColor: '#1E4D7A'
+  });
+};
 
   const handlePaymentSuccess = (paymentResult) => {
-    setShowPaymentModal(false);
-    if (selectedService === 'chat') {
-      setActiveSession({
-        sessionToken: paymentResult.sessionToken,
-        duration: paymentResult.durationMinutes,
-        lawyer: lawyer,
-        bookingId: paymentResult.bookingId
-      });
-      setShowChatModal(true);
-    } else {
-      alert(`${selectedService} session scheduled!`);
-      handleClose();
-    }
-  };
+  setShowPaymentModal(false);
+  if (selectedService === 'chat') {
+    setActiveSession({
+      sessionToken: paymentResult.sessionToken,
+      duration: paymentResult.durationMinutes,
+      lawyer: lawyer,
+      bookingId: paymentResult.bookingId
+    });
+    setShowChatModal(true);
+  } else if (selectedService === 'call') {
+    // Open phone dialer on mobile
+    Swal.fire({
+  toast: true,
+  icon: 'success',
+  title: 'Connecting call...',
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 2000,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.addEventListener('mouseenter', Swal.stopTimer)
+    toast.addEventListener('mouseleave', Swal.resumeTimer)
+  }
+});
+
+    window.location.href = 'tel:9389115137';
+  } 
+  
+  else {
+  Swal.fire({
+    icon: 'success',
+    title: 'Session Scheduled',
+    text: `${selectedService.charAt(0).toUpperCase() + selectedService.slice(1)} session scheduled successfully!`,
+    confirmButtonColor: '#1E4D7A'
+  }).then(() => {
+    handleClose();
+  });
+}
+
+};
+
+
 
   const handleChatClose = () => {
     setShowChatModal(false);
@@ -72,7 +111,7 @@ const LawyerProfileModal = ({ show, handleClose, lawyer }) => {
                       <FaStar key={i} color={i < (lawyer?.rating || 0) ? '#E8B63A' : '#6c757d'} />
                     ))}
                   </div>
-                  <div className="rating-text">{lawyer?.reviews?.length || 0} reviews</div>
+                  {/* <div className="rating-text">{lawyer?.reviews?.length || 0} reviews</div> */}
                 </div>
 
                 <div className="experience">
@@ -115,7 +154,7 @@ const LawyerProfileModal = ({ show, handleClose, lawyer }) => {
                   </div>
                 </Tab>
 
-                <Tab eventKey="reviews" title="Reviews">
+                {/* <Tab eventKey="reviews" title="Reviews">
                   <div className="mt-3">
                     {lawyer?.reviews?.length > 0 ? lawyer.reviews.map((review, index) => (
                       <div key={index} className="mb-3 p-3 border rounded" style={{ background: '#f8f9fa' }}>
@@ -137,7 +176,7 @@ const LawyerProfileModal = ({ show, handleClose, lawyer }) => {
                       </div>
                     )}
                   </div>
-                </Tab>
+                </Tab> */}
 
                 <Tab eventKey="services" title="Services">
                   <div className="mt-3">
@@ -171,7 +210,7 @@ const LawyerProfileModal = ({ show, handleClose, lawyer }) => {
           <div className="d-flex flex-wrap gap-2 mb-2 mb-md-0">
             <Button variant="outline-primary" onClick={() => handleOpenPayment('call')} className="d-flex align-items-center"><FaPhone className="me-2" /> Call</Button>
             <Button variant="outline-success" onClick={() => handleOpenPayment('chat')} className="d-flex align-items-center"><FaCommentDots className="me-2" /> Chat</Button>
-            <Button variant="outline-danger" onClick={() => handleOpenPayment('video')} className="d-flex align-items-center"><FaVideo className="me-2" /> Video</Button>
+            <Button variant="outline-danger" onClick={() => handlevideoCall('video')} className="d-flex align-items-center"><FaVideo className="me-2" /> Video</Button>
           </div>
           <Button variant="primary" onClick={handleClose} style={{ background: '#1E4D7A', border: 'none' }}>Close</Button>
         </Modal.Footer>
