@@ -8,7 +8,7 @@ function NavAvatar() {
     <div>
       <IconButton  style={{ padding: "20px" }}>
         {/* Use DiceBear random avatar */}
-        <h1>Avtar</h1>
+        <h4>Lawyer10On10</h4>
       </IconButton>
 
     </div>

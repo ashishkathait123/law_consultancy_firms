@@ -263,7 +263,7 @@ const handleLogin = async (e) => {
              borderBottomLeftRadius: '15px',
              borderBottomRightRadius: '15px'
            }}>
-        <h3 className="fw-bold">Find Your Legal Solution</h3>
+        <h3 className="fw-bold">Find Your Legal Solution with Lawyer10On10</h3>
         <p className="mb-0">Connect with expert lawyers for your legal needs</p>
       </div>
     </div>

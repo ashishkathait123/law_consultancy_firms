@@ -1,6 +1,6 @@
 import React from 'react'
 import './logo.css';
-import logo from '/images/law1.jpg'
+import logo from '/images/law3.png'
 import { CiMenuFries } from "react-icons/ci";
 import { HiMenuAlt1 } from "react-icons/hi";
 
