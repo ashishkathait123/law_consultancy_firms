@@ -101,7 +101,7 @@ const LawyerCard = ({ lawyer, onViewProfile }) => {
         {lawyer.profileImage ? (
           <ProfileImage src={lawyer.profileImage} alt={lawyer.name} />
         ) : (
-          <FaUserTie size={40} color="#1E4D7A" />
+          <FaUserTie size={40} color="#1c1c84" />
         )}
       </ProfileImageContainer>
 
@@ -221,7 +221,7 @@ const ProfileImageContainer = styled.div`
   align-items: center;
   justify-content: center;
   background-color: #f8f9fa;
-  border: 2px solid #1E4D7A;
+  border: 2px solid #1c1c84;
 `;
 
 const ProfileImage = styled.img`
@@ -241,7 +241,7 @@ const Name = styled.h3`
   font-size: 16px;
   font-weight: 600;
   margin: 0 0 4px 0;
-  color: #1E4D7A;
+  color: #1c1c84;
 `;
 
 const Specializations = styled.p`
@@ -303,7 +303,7 @@ const ActionButtons = styled.div`
 `;
 
 const ViewProfileButton = styled.button`
-  background: #1E4D7A;
+  background: #1c1c84;
   color: white;
   border: none;
   border-radius: 4px;

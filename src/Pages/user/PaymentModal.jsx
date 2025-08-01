@@ -202,7 +202,7 @@ onPaymentSuccess({
     console.log('🔍 Render Check:', { sessionToken, bookingId, lawyer, duration, currentUser });
     return (
       <Modal show={internalShow} onHide={handleHide} centered fullscreen>
-        <Modal.Header closeButton style={{ background: '#1E4D7A', color: 'white' }}>
+        <Modal.Header closeButton style={{ background: '#1c1c84', color: 'white' }}>
           <Modal.Title>
             <i className={`fas ${serviceDetails[serviceType]?.icon} me-2`}></i>
             Chat Session with {lawyer?.name}
@@ -239,7 +239,7 @@ onPaymentSuccess({
   // Payment UI
   return (
     <Modal show={internalShow} onHide={handleHide} centered>
-      <Modal.Header closeButton style={{ background: '#1E4D7A', color: 'white' }}>
+      <Modal.Header closeButton style={{ background: '#1c1c84', color: 'white' }}>
         <Modal.Title>
           <i className={`fas ${serviceDetails[serviceType]?.icon} me-2`}></i>
           {serviceDetails[serviceType]?.name || 'Consultation'} Payment

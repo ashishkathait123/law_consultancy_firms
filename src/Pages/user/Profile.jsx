@@ -126,7 +126,7 @@ const ClientProfile = () => {
       <div className="row justify-content-center">
         <div className="col-12 col-lg-10 col-xl-8">
           <div className="card shadow-sm border-0">
-            <div className="card-header  text-white py-3" style={{ backgroundColor: '#1E4D7A' }}>
+            <div className="card-header  text-white py-3" style={{ backgroundColor: '#1c1c84' }}>
               <div className="d-flex justify-content-between align-items-center">
                 <h2 className="h4 mb-0">
                   <i className="fas fa-user me-2"></i>
@@ -299,7 +299,7 @@ const ClientProfile = () => {
                         />
                       </div>
                     </div>
-                    <div className="col-12">
+                    {/* <div className="col-12">
                       <div className="form-group">
                         <label className="form-label">Legal Needs</label>
                         <div className="row g-2">
@@ -322,7 +322,7 @@ const ClientProfile = () => {
                           ))}
                         </div>
                       </div>
-                    </div>
+                    </div> */}
                   </div>
 
                   <div className="d-flex justify-content-end gap-3 mt-4">
@@ -336,7 +336,7 @@ const ClientProfile = () => {
                     </button>
                     <button 
                       type="submit" 
-                      className="btn btn-dark px-4"
+                      className="btn btn-outline-secondary px-4"
                       disabled={isLoading}
                     >
                       {isLoading ? (

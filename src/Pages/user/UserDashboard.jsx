@@ -129,7 +129,7 @@ const UserDashboard = () => {
             <h1 className="h3 mb-0 text-dark font-weight-bold">{userData.name}</h1>
             <p className="text-muted mb-0">Client Dashboard</p>
           </div>
-          <div className="badge bg-primary text-white px-3 py-2 rounded-pill">
+          <div className="badge  text-blue-700 px-3 py-2 rounded-pill">
             <i className="fas fa-user-tie me-2"></i>
             Client ID: {userData._id?.substring(0, 8) || 'N/A'}
           </div>
@@ -151,11 +151,11 @@ const UserDashboard = () => {
                 {/* Profile Picture */}
                 <div className="text-center mb-4">
                   <div className="avatar-container mx-auto mb-3">
-                    <div className="avatar-placeholder bg-gradient-primary rounded-circle d-flex align-items-center justify-content-center" 
+                    <div className="avatar-placeholder bg-gradient-[#000080] rounded-circle d-flex align-items-center justify-content-center" 
                          style={{ 
                            width: "100px", 
                            height: "100px",
-                           background: 'linear-gradient(135deg, #1E4D7A 0%, #3A7CBA 100%)'
+                           background: 'linear-gradient(135deg, #1c1c84 0%, #3A7CBA 100%)'
                          }}>
                       <i className="fas fa-user text-white" style={{ fontSize: "2.5rem" }}></i>
                     </div>
@@ -169,7 +169,7 @@ const UserDashboard = () => {
                   <div className="col-6">
                     <div className="card border-0 rounded-3 p-2 h-100" style={{ background: 'rgba(30, 77, 122, 0.1)' }}>
                       <div className="card-body text-center py-2">
-                        <div className="fs-4 fw-bold text-primary">{meetingCount + requestCount}</div>
+                        <div className="fs-4 fw-bold text-[#000080]">{meetingCount + requestCount}</div>
                         <div className="text-muted small">Total Cases</div>
                       </div>
                     </div>
@@ -323,7 +323,7 @@ const UserDashboard = () => {
         }
         .timeline-title {
           font-weight: 600;
-          color: #1E4D7A;
+          color: #1c1c84;
         }
         .badge {
           transition: all 0.3s ease;

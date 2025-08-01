@@ -257,7 +257,7 @@ const LoadingSpinner = styled.div`
   width: 50px;
   height: 50px;
   border: 5px solid #f3f3f3;
-  border-top: 5px solid #1E4D7A;
+  border-top: 5px solid #1c1c84;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 2rem auto;
@@ -354,7 +354,7 @@ const LawyerAvatar = styled.div`
   align-items: center;
   justify-content: center;
   margin-right: 1rem;
-  color: #1E4D7A;
+  color: #1c1c84;
   font-size: 1.5rem;
 `;
 
@@ -441,7 +441,7 @@ const SearchInput = styled.input`
 
   &:focus {
     outline: none;
-    border-color: #1E4D7A;
+    border-color: #1c1c84;
     box-shadow: 0 0 0 2px rgba(30, 77, 122, 0.2);
   }
 `;
@@ -465,14 +465,14 @@ const PaginationButton = styled.button`
   margin: 0 0.25rem;
   padding: 0.5rem 0.75rem;
   border: 1px solid #ddd;
-  background-color: ${props => props.active ? '#1E4D7A' : 'white'};
+  background-color: ${props => props.active ? '#1c1c84' : 'white'};
   color: ${props => props.active ? 'white' : '#2c3e50'};
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
 
   &:hover:not(:disabled) {
-    background-color: ${props => props.active ? '#1E4D7A' : '#f5f5f5'};
+    background-color: ${props => props.active ? '#1c1c84' : '#f5f5f5'};
   }
 
   &:disabled {

@@ -283,7 +283,7 @@ const handleLogin = async (e) => {
                 border: 'none'
               }}>
                 <div className="card-header py-3" style={{
-                  background: '#1E4D7A',
+                  background: '#1c1c84',
                   color: 'white'
                 }}>
                   <h3 className="text-center mb-0" style={{ fontWeight: '600', fontSize: '1.5rem' }}>
@@ -328,7 +328,7 @@ const handleLogin = async (e) => {
                           <label className="fw-bold" style={{ fontSize: '0.9rem' }}>Full Name <span className="text-danger">*</span></label>
                           <div className="input-group input-group-sm">
                             <span className="input-group-text bg-white">
-                              <i className="fas fa-user text-primary" style={{ fontSize: '0.8rem' }}></i>
+                              <i className="fas fa-user text-primary" style={{ fontSize: '0.8rem'}}></i>
                             </span>
                             <input
                               type="text"
@@ -579,7 +579,7 @@ const handleLogin = async (e) => {
                         className="btn btn-primary w-100 py-2 fw-bold"
                         disabled={isSubmitting}
                         style={{
-                          background: '#1E4D7A',
+                          background: '#1c1c84',
                           border: 'none',
                           borderRadius: '5px',
                           fontSize: '0.9rem'
@@ -627,7 +627,7 @@ const handleLogin = async (e) => {
                 border: 'none'
               }}>
                 <div className="card-header py-3" style={{
-                  background: '#1E4D7A',
+                  background: '#1c1c84',
                   color: 'white'
                 }}>
                   <h3 className="text-center mb-0" style={{ fontWeight: '600', fontSize: '1.5rem' }}>
@@ -709,7 +709,7 @@ const handleLogin = async (e) => {
                         className="btn btn-primary w-100 py-2 fw-bold"
                         disabled={loading}
                         style={{
-                          background: '#1E4D7A',
+                          background: '#1c1c84',
                           border: 'none',
                           borderRadius: '5px',
                           fontSize: '0.9rem'

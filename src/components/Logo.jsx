@@ -1,6 +1,6 @@
 import React from 'react'
 import './logo.css';
-import logo from '/images/law3.png'
+import logo from '/images/law2.jpg'
 import { CiMenuFries } from "react-icons/ci";
 import { HiMenuAlt1 } from "react-icons/hi";
 
@@ -14,7 +14,7 @@ function Logo() {
     <div className='d-flex align-items-center justify-content-between'>
       <a href='/' className='logo d-flex align-items-center text-decoration-none'>
 
-        <img src={logo} alt='Dream' style={{ height: "auto", width: "92px" }} />
+        <img src={logo} alt='Dream' style={{ height: "auto", width: "76px" }} />
 
       </a>
       <HiMenuAlt1 className='toggle-sidebar-btn m-2' onClick={handleToggleSideBar} />

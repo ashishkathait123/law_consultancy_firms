@@ -25,7 +25,7 @@ const handlevideoCall = () => {
     icon: 'info',
     title: 'Coming Soon',
     text: 'Video call feature is coming soon!',
-    confirmButtonColor: '#1E4D7A'
+    confirmButtonColor: '#1c1c84'
   });
 };
 
@@ -55,15 +55,23 @@ const handlevideoCall = () => {
   }
 });
 
-    window.location.href = 'tel:9389115137';
-  } 
+if (lawyer?.phone) {
+  window.location.href = `tel:${lawyer.phone}`;
+} else {
+  Swal.fire({
+    icon: 'error',
+    title: 'Phone Number Not Available',
+    text: 'The lawyer does not have a phone number listed.',
+    confirmButtonColor: '#1c1c84'
+  });
+}  } 
   
   else {
   Swal.fire({
     icon: 'success',
     title: 'Session Scheduled',
     text: `${selectedService.charAt(0).toUpperCase() + selectedService.slice(1)} session scheduled successfully!`,
-    confirmButtonColor: '#1E4D7A'
+    confirmButtonColor: '#1c1c84'
   }).then(() => {
     handleClose();
   });
@@ -85,7 +93,7 @@ const handlevideoCall = () => {
   return (
     <>
       <Modal show={show && !showChatModal} onHide={handleClose} size="lg" centered backdrop={showChatModal ? 'static' : true}>
-        <Modal.Header closeButton style={{ background: '#1E4D7A', color: 'white' }}>
+        <Modal.Header closeButton style={{ background: '#1c1c84', color: 'white' }}>
           <Modal.Title>Lawyer Profile</Modal.Title>
         </Modal.Header>
 
@@ -97,7 +105,7 @@ const handlevideoCall = () => {
                   <img src={lawyerImageUrl} alt={lawyer?.name || 'Lawyer'} className="img-fluid rounded-circle" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
                   <div className="avatar-placeholder">
-                    <FaUserTie size={50} color="#1E4D7A" />
+                    <FaUserTie size={50} color="#1c1c84" />
                   </div>
                 )}
               </div>
@@ -139,11 +147,11 @@ const handlevideoCall = () => {
               <Tabs defaultActiveKey="profile" className="mb-3" fill>
                 <Tab eventKey="profile" title="Profile">
                   <div className="mt-3">
-                    <h5 style={{ color: '#1E4D7A' }}>About</h5>
+                    <h5 style={{ color: '#1c1c84' }}>About</h5>
                     <p style={{ color: '#444' }}>{lawyer?.profileDescription || 'No profile description available'}</p>
 
                     <div className="lawyer-details">
-                      <h5 style={{ color: '#1E4D7A', marginBottom: '15px' }}>Details</h5>
+                      <h5 style={{ color: '#1c1c84', marginBottom: '15px' }}>Details</h5>
                       <ul className="list-unstyled">
                         <li className="mb-2"><FaGraduationCap className="text-primary me-2" /><strong>Education:</strong> {lawyer?.education?.join(', ') || 'Not specified'}</li>
                         <li className="mb-2"><FaLanguage className="text-primary me-2" /><strong>Languages:</strong> English</li>
@@ -159,7 +167,7 @@ const handlevideoCall = () => {
                     {lawyer?.reviews?.length > 0 ? lawyer.reviews.map((review, index) => (
                       <div key={index} className="mb-3 p-3 border rounded" style={{ background: '#f8f9fa' }}>
                         <div className="d-flex justify-content-between align-items-center">
-                          <strong style={{ color: '#1E4D7A' }}>{review.user}</strong>
+                          <strong style={{ color: '#1c1c84' }}>{review.user}</strong>
                           <small className="text-muted">{new Date(review.date).toLocaleDateString()}</small>
                         </div>
                         <div className="my-2">
@@ -187,7 +195,7 @@ const handlevideoCall = () => {
                           {service === 'call' && <FaPhone className="text-primary me-3" size={24} />}
                           {service === 'video' && <FaVideo className="text-danger me-3" size={24} />}
                           <div>
-                            <h5 style={{ color: '#1E4D7A', marginBottom: '5px' }}>{`${service.charAt(0).toUpperCase() + service.slice(1)} Consultation`}</h5>
+                            <h5 style={{ color: '#1c1c84', marginBottom: '5px' }}>{`${service.charAt(0).toUpperCase() + service.slice(1)} Consultation`}</h5>
                             <p style={{ color: '#666', marginBottom: '0' }}>{`Discuss via ${service} with ${lawyer?.name?.split(' ')[0]}`}</p>
                           </div>
                         </div>
@@ -212,7 +220,7 @@ const handlevideoCall = () => {
             <Button variant="outline-success" onClick={() => handleOpenPayment('chat')} className="d-flex align-items-center"><FaCommentDots className="me-2" /> Chat</Button>
             <Button variant="outline-danger" onClick={() => handlevideoCall('video')} className="d-flex align-items-center"><FaVideo className="me-2" /> Video</Button>
           </div>
-          <Button variant="primary" onClick={handleClose} style={{ background: '#1E4D7A', border: 'none' }}>Close</Button>
+          <Button variant="primary" onClick={handleClose} style={{ background: '#1c1c84', border: 'none' }}>Close</Button>
         </Modal.Footer>
       </Modal>
 
@@ -226,7 +234,7 @@ const handlevideoCall = () => {
 
       {showChatModal && activeSession && (
         <Modal show={showChatModal} onHide={handleChatClose} size="lg" centered fullscreen="md-down">
-          <Modal.Header closeButton style={{ background: '#1E4D7A', color: 'white' }}>
+          <Modal.Header closeButton style={{ background: '#1c1c84', color: 'white' }}>
             <Modal.Title><FaCommentDots className="me-2" /> Chat with {lawyer?.name}</Modal.Title>
           </Modal.Header>
 <Modal.Body style={{ padding: 0, height: '100vh', overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
