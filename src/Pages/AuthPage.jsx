@@ -117,18 +117,17 @@ const redirect = new URLSearchParams(location.search).get('redirect');
         phone: formData.phone
       };
     } else if (userRole === 'lawyer') {
-      submissionData = {
-        role: formData.role,
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        // addressline: formData.addressline,
-        // city: formData.city,
-        licenseNumber: formData.licenseNumber,
-        phone: formData.phone,
-        experience: formData.experience,
-        specialization: formData.specialization
-      };
+     submissionData = {
+  role: formData.role,
+  name: formData.name,
+  email: formData.email,
+  password: formData.password,
+  phone: formData.phone.toString(), // 🔧 FIXED
+  licenseNumber: formData.licenseNumber,
+  experience: formData.experience,
+  specialization: formData.specialization
+};
+
     } else { // user
       submissionData = {
         role: formData.role,
