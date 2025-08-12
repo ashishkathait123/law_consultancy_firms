@@ -290,6 +290,7 @@ setChatSessionData({ bookingId, userId, duration, client: {
 
   useEffect(() => {
     const authToken = sessionStorage.getItem('token');
+    console.log("🔐 sessionToken (inside LawyerDashboard):", authToken);
     const userData = JSON.parse(sessionStorage.getItem('userData'));
     if (!authToken || !userData?.lawyerId) return;
 
@@ -376,29 +377,27 @@ setChatSessionData({ bookingId, userId, duration, client: {
   sessionToken={sessionToken}
   chatDuration={chatSessionData.duration}
   lawyer={lawyer}
-  client={chatSessionData.client} // ✅ Add this line
+  client={chatSessionData.client}
   bookingId={chatSessionData.bookingId}
   role="lawyer"
   currentUser={normalizedUser}
-onReady={() => {
-  const socket = getSocket();
-  const userId = chatSessionData.userId;
-  const bookingId = chatSessionData.bookingId;
-  const userData = JSON.parse(sessionStorage.getItem('userData'));
+  onReady={() => {
+    const socket = getSocket();
+    const userId = chatSessionData.userId;
+    const bookingId = chatSessionData.bookingId;
+    const userData = JSON.parse(sessionStorage.getItem('userData'));
 
-  const roomName = `booking-${bookingId}`;
-  socket.emit("join-booking", roomName);
-  console.log("📥 Lawyer joined booking room:", roomName);
+    console.log("🚀 ChatBox is ready, about to emit booking-accepted");
 
-  socket.emit('booking-accepted', {
-    bookingId,
-    lawyerId: userData.lawyerId,
-    userId,
-  });
+    socket.emit('booking-accepted', {
+      bookingId,
+      lawyerId: userData.lawyerId,
+      userId,
+    });
+console.log("🔐 sessionToken (about to be passed to ChatBox):", sessionToken);
 
-  console.log("✅ Emitted booking-accepted AFTER joining");
-}}
-
+    console.log("✅ Emitted booking-accepted AFTER ChatBox joined");
+  }}
 />
 
       ) : (

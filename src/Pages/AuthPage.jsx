@@ -275,7 +275,7 @@ const handleLogin = async (e) => {
             <div 
               className={`auth-form-container ${isRegisterVisible ? 'active' : ''} ${animationDirection === 'right' ? 'slide-out-right' : 'slide-in-right'}`}
               style={{ display: isRegisterVisible ? 'block' : 'none' }}
-            >
+             >
               <div className="card shadow-lg border-0" style={{
                 borderRadius: '15px',
                 overflow: 'hidden',

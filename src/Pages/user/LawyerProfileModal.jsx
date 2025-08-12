@@ -15,7 +15,7 @@ const LawyerProfileModal = ({ show, handleClose, lawyer }) => {
   const [showChatModal, setShowChatModal] = useState(false);
   const [selectedService, setSelectedService] = useState('');
   const [activeSession, setActiveSession] = useState(null);
-
+console.log("🔐 sessionToken (inside LawyerProfileModal):", sessionStorage.getItem('token'))    ;
   const handleOpenPayment = (serviceType) => {
     setSelectedService(serviceType);
     setShowPaymentModal(true);
@@ -34,6 +34,7 @@ const handlevideoCall = () => {
   if (selectedService === 'chat') {
     setActiveSession({
       sessionToken: paymentResult.sessionToken,
+    
       duration: paymentResult.durationMinutes,
       lawyer: lawyer,
       bookingId: paymentResult.bookingId
