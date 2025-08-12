@@ -289,36 +289,38 @@ setChatSessionData({ bookingId, userId, duration, client: {
   };
 
   useEffect(() => {
-    const authToken = sessionStorage.getItem('token');
-    console.log("🔐 sessionToken (inside LawyerDashboard):", authToken);
-    const userData = JSON.parse(sessionStorage.getItem('userData'));
-    if (!authToken || !userData?.lawyerId) return;
+  const authToken = sessionStorage.getItem('token');
+  const userData = JSON.parse(sessionStorage.getItem('userData'));
+  if (!authToken || !userData?.lawyerId) return;
 
-    const socket = initSocket(authToken, userData.lawyerId, 'lawyer');
+  const socket = initSocket(authToken, userData.lawyerId, 'lawyer');
 
-    socket.on('connect', () => {
-      console.log("✅ Socket connected");
-      socket.emit('join-lawyer', userData.lawyerId);
-      setSocketReady(true);
+  const handleBookingNotification = (data) => {
+    console.log("📥 Booking notification received:", data);
+    setNotificationData({
+      bookingId: data.bookingId,
+      name: data.userName || "Unknown Client", // fallback in case missing
+      userId: data.userId,
+      mode: data.mode,
+      timestamp: data.createdAt || new Date().toISOString(),
     });
+    setShowModal(true);
+  };
 
-    socket.on('booking-notification', (data) => {
-        console.log("📥 Booking notification received:", data);
+  socket.on('connect', () => {
+    console.log("✅ Socket connected");
+    socket.emit('join-lawyer', userData.lawyerId);
+    setSocketReady(true);
+  });
 
-      setNotificationData({
-        bookingId: data.bookingId,
-        name: data.userName,
-        userId: data.userId,
-        mode: data.mode,
-        timestamp: data.createdAt,
-      });
-      setShowModal(true);
-    });
+  socket.on('booking-notification', handleBookingNotification);
 
-    return () => {
-      if (socket.connected) socket.disconnect();
-    };
-  }, []);
+  return () => {
+    socket.off('booking-notification', handleBookingNotification);
+    if (socket.connected) socket.disconnect();
+  };
+}, []);
+
 
   if (loading) {
     return (
