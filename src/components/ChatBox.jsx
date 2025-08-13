@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from '../components/AuthContext';
-import { initSocket } from '../components/socket';
+import { initSocket, getSocket } from '../components/socket';
 import { toast } from 'react-toastify';
 import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data';
@@ -28,7 +28,7 @@ import {
   Close as CloseIcon
 } from '@mui/icons-material';
 
-// Styled components for better organization
+// Styled components (No changes needed)
 const ChatContainer = styled(Paper)`
   display: flex;
   flex-direction: column;
@@ -166,12 +166,8 @@ const ChatBox = ({
   role = 'client',
   currentUser: passedUser,
   onReady,
-  authToken, // ✅ Add this
 }) => {
-
-
-    const emojiPickerRef = useRef(null);
-
+  const emojiPickerRef = useRef(null);
   const auth = useAuth();
   const currentUser = passedUser || auth?.currentUser;
 
@@ -187,513 +183,369 @@ const ChatBox = ({
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  const handleTyping = (e) => {
-    setMessage(e.target.value);
-    socketRef.current?.emit('typing', {
-      bookingId,
-      senderId: currentUser.userId,
-      senderRole: role,
-    });
-  };
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-
- //effect to handle clicks outside the emoji picker
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
-        // Check if the click was on the emoji button
-        const emojiButton = document.querySelector('.emoji-button');
-        if (!emojiButton || !emojiButton.contains(event.target)) {
-          setShowEmojiPicker(false);
-        }
-      }
-    };
+    const token = sessionToken || sessionStorage.getItem('token');
+    if (!token || !bookingId || !currentUser?.userId) {
+      console.error("❌ ChatBox: Missing required props for connection.");
+      return;
+    }
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  useEffect(scrollToBottom, [messages]);
-
-  useEffect(() => {
-    if (sessionStatus !== 'active' || remainingTime <= 0) return;
-
-    const interval = setInterval(() => {
-      setRemainingTime((prev) => {
-        if (prev <= 1) {
-          setSessionStatus('expired');
-          socketRef.current?.emit('end-session', { bookingId });
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [sessionStatus, remainingTime]);
-
-
-
-  useEffect(() => {
-    if (!sessionToken || !bookingId || !currentUser?.userId) return;
-
-    const socket = initSocket(token, currentUser.userId, currentUser.role || role);
-    if (!socket) return;
-
+    const socket = getSocket();
+    if (!socket) {
+      console.error("❌ Socket has not been initialized. Cannot establish chat.");
+      return;
+    }
     socketRef.current = socket;
 
-    const fallbackTimer = setTimeout(() => {
-      if (socket.connected && sessionStatus === 'waiting') {
-        console.warn('⚠️ session-started not received, still waiting...');
+    const fetchChatHistory = async () => {
+      try {
+        const res = await axios.get(
+          `https://lawyerbackend-qrqa.onrender.com/lawapi/common/gethistory/${bookingId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (!res.data.error && Array.isArray(res.data.data)) {
+          const sortedMessages = res.data.data.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+          setMessages(sortedMessages);
+        }
+      } catch (err) {
+        console.error("❌ Error fetching chat history", err.response?.data || err.message);
       }
-    }, 7000);
+    };
+    fetchChatHistory();
 
-    socket.on('connect', () => {
+    const handleConnect = () => {
       setSocketConnected(true);
       socket.emit('join-booking', bookingId);
       if (onReady) onReady();
-    });
+    };
 
-    socket.on('disconnect', () => setSocketConnected(false));
-    socket.on('connect_error', () => setSocketConnected(false));
+    const handleDisconnect = () => setSocketConnected(false);
 
-    socket.on('session-started', (data) => {
+    const handleSessionStarted = (data) => {
       if (data.bookingId === bookingId) {
         setSessionStatus('active');
         setRemainingTime(data.duration || chatDuration * 60);
         toast.success("✅ Session started!");
       }
-    });
+    };
 
-    socket.on('new-message', async (msg) => {
-  if (msg.bookingId === bookingId) {
-    setMessages((prev) => [...prev, msg]);
+    // ✅ FIX: THIS IS THE CORE CHANGE TO PREVENT DUPLICATES
+    const handleNewMessage = (msg) => {
+      // Only add the message if it's from the correct booking
+      // AND it is NOT from the current user (to prevent echo).
+      if (msg.bookingId === bookingId && msg.senderId !== currentUser.userId) {
+        setMessages((prev) => [...prev, msg]);
+      }
+    };
 
-    // 🔄 Save received message to DB
-    try {
-const token = authToken || sessionStorage.getItem('token'); // ✅ fixes it
-;
-console.log("🎯 Loaded session token from sessionStorage:", token);
-
-      console.log('🔐 Session Token:', sessionToken);
-
-      await axios.post(
-        'https://lawyerbackend-qrqa.onrender.com/lawapi/common/sendmessage',
-        {
-          bookingId: msg.bookingId,
-          content: msg.content,
-          files: msg.files || []
-        },
-        {
-          headers: {
-              'Content-Type': 'application/json',
-
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-    } catch (err) {
-      console.error('❌ Failed to save received message', err.response?.data || err.message);
-    }
-  }
-});
-
-
-    socket.on('session-time', ({ remaining }) => setRemainingTime(remaining));
-
-    socket.on('session-ended', () => {
-      setSessionStatus('expired');
-      toast.info("⚠️ Session has ended.");
-    });
-
-    socket.on('typing', (data) => {
+    const handleTypingIndicator = (data) => {
       if (data.bookingId === bookingId && data.senderId !== currentUser.userId) {
         setOtherTyping(true);
-        setTimeout(() => setOtherTyping(false), 1500);
+        setTimeout(() => setOtherTyping(false), 2000);
       }
-    });
+    };
+    
+    const handleSessionEnded = () => {
+        setSessionStatus('expired');
+        toast.info("⚠️ Session has ended.");
+    };
+
+    if (socket.connected) {
+      handleConnect();
+    }
+    socket.on('connect', handleConnect);
+    socket.on('disconnect', handleDisconnect);
+    socket.on('session-started', handleSessionStarted);
+    socket.on('new-message', handleNewMessage);
+    socket.on('session-ended', handleSessionEnded);
+    socket.on('typing', handleTypingIndicator);
 
     return () => {
-      clearTimeout(fallbackTimer);
-      socket.off();
-      socket.disconnect();
+      socket.off('connect', handleConnect);
+      socket.off('disconnect', handleDisconnect);
+      socket.off('session-started', handleSessionStarted);
+      socket.off('new-message', handleNewMessage);
+      socket.off('session-ended', handleSessionEnded);
+      socket.off('typing', handleTypingIndicator);
     };
-  }, [sessionToken, bookingId, currentUser]);
 
-  
-const token = sessionToken || currentUser?.token || sessionStorage.getItem('token');
+  }, [bookingId, currentUser, onReady, sessionToken]);
 
-const fetchChatHistory = async () => {
-  try {
-    const res = await axios.get(
-      `https://lawyerbackend-qrqa.onrender.com/lawapi/common/gethistory/`,
-      {
-        params: { bookingId },
-        headers: {
-          Authorization: `Bearer ${token}`
+  useEffect(() => {
+    if (sessionStatus !== 'active' || remainingTime <= 0) return;
+    const interval = setInterval(() => {
+      setRemainingTime((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setSessionStatus('expired');
+          socketRef.current?.emit('end-session', { bookingId });
+          return 0;
         }
-      }
-    );
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [sessionStatus, remainingTime, bookingId]);
 
-    if (!res.data.error && Array.isArray(res.data.data)) {
-      const sortedMessages = res.data.data.sort(
-        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-      );
-      setMessages(sortedMessages);
-    } else {
-      console.warn("⚠️ Failed to fetch history:", res.data.message);
-    }
-  } catch (err) {
-    console.error("❌ Error fetching chat history", err.response?.data || err.message);
-  }
-};
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+  
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!message.trim() || sessionStatus !== 'active' || !socketConnected) return;
 
-useEffect(() => {
-  if (!token || !bookingId || !currentUser?.userId) return;
+    const token = sessionToken || sessionStorage.getItem('token');
+    const msgData = {
+      id: uuidv4(), // Temporary ID for React key purposes
+      sender: currentUser.name,
+      senderId: currentUser.userId,
+      senderRole: role,
+      content: message,
+      type: 'text',
+      bookingId,
+      timestamp: new Date().toISOString(),
+    };
 
-  fetchChatHistory(); // ✅ Load previous chat before connecting
+    // Emit the message to the server
+    socketRef.current?.emit('chat-message', msgData);
+    
+    // Optimistically add the message to our own UI
+    setMessages((prev) => [...prev, msgData]);
+    setMessage('');
 
-  const socket = initSocket(token, currentUser.userId, currentUser.role || role);
-
-  // ✅ Continue with your existing socket logic
-}, [token, bookingId, currentUser]);
-
-
-useEffect(() => {
-  if (!sessionToken || !bookingId || !currentUser?.userId) return;
-
-  fetchChatHistory(); // ✅ Load previous chat before connecting
-
-  const socket = initSocket(token, currentUser.userId, currentUser.role || role);
-  // ...
-}, [sessionToken, bookingId, currentUser]);
-
-const handleSendMessage = async (e) => {
-  e.preventDefault();
-  if (!message.trim() || sessionStatus !== 'active' || !socketConnected) return;
-
-  const msg = {
-    id: uuidv4(),
-    sender: currentUser.name,
-    senderId: currentUser.userId,
-    senderRole: role,
-    content: message,
-    type: 'text',
-    bookingId,
-    timestamp: new Date().toISOString(),
+    // Persist the message to the database in the background
+    // try {
+    //   await axios.post(
+    //     'https://lawyerbackend-qrqa.onrender.com/lawapi/common/sendmessage',
+    //     { bookingId, content: message, files: [] },
+    //     { headers: { Authorization: `Bearer ${token}` } }
+    //   );
+    // } catch (err) {
+    //   console.error('❌ Failed to save message', err.response?.data || err.message);
+      // toast.error("Failed to send message.");
+      // Optional: Here you could implement logic to mark the message as "failed" in the UI
+    // }
   };
 
-  socketRef.current?.emit('chat-message', msg);
-
-  try {
-    const payload = {
-      bookingId,
-      content: message
-    };
-
-    console.log("📤 Sending message to backend:", payload);
-    console.log("🔐 Session Token:", sessionToken);
-
-  const authToken = sessionStorage.getItem('token'); // or use currentUser?.token
-
-await axios.get(
-  `https://lawyerbackend-qrqa.onrender.com/lawapi/common/gethistory/${bookingId}`, // ✅ path param
-  {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  }
-);
-
-
-  } catch (err) {
-    console.error('❌ Failed to save message', err.response?.data || err.message);
-  }
-
-  setMessage('');
-};
-
-
-  const formatTime = (secs) => `${Math.floor(secs / 60)}:${(secs % 60).toString().padStart(2, '0')}`;
-
+  const handleTyping = (e) => {
+    setMessage(e.target.value);
+    socketRef.current?.emit('typing', { bookingId, senderId: currentUser.userId });
+  };
+  
   const handleEndSession = () => {
     if (window.confirm('Are you sure you want to end this session?')) {
       socketRef.current?.emit('end-session', { bookingId });
       setSessionStatus('expired');
     }
   };
+    
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
- const handleFileUpload = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+    const token = sessionToken || sessionStorage.getItem('token');
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+        const msg = {
+            id: uuidv4(),
+            sender: currentUser.name,
+            senderId: currentUser.userId,
+            senderRole: role,
+            content: reader.result,
+            filename: file.name,
+            fileType: file.type,
+            type: 'file',
+            bookingId,
+            timestamp: new Date().toISOString(),
+        };
 
-  const reader = new FileReader();
-  reader.onloadend = async () => {
-    const msg = {
-      id: uuidv4(),
-      sender: currentUser.name,
-      senderId: currentUser.userId,
-      senderRole: role,
-      content: reader.result,
-      filename: file.name,
-      fileType: file.type,
-      type: 'file',
-      bookingId,
-      timestamp: new Date().toISOString(),
+        socketRef.current?.emit('chat-message', msg);
+        setMessages(prev => [...prev, msg]);
+
+        try {
+            await axios.post(
+                'https://lawyerbackend-qrqa.onrender.com/lawapi/common/sendmessage',
+                {
+                    bookingId,
+                    content: `File: ${file.name}`,
+                    files: [{ fileUrl: reader.result, fileType: file.type, fileName: file.name }]
+                },
+                { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } }
+            );
+        } catch (err) {
+            console.error('❌ Failed to save file message', err);
+            toast.error("Failed to upload file.");
+        }
     };
-
-    socketRef.current?.emit('chat-message', msg);
-
-    // Save to DB
-    try {
-      await axios.post(
-  'https://lawyerbackend-qrqa.onrender.com/lawapi/common/sendmessage',
-  {
-    bookingId,
-    content: file.name,
-    files: [{
-      fileUrl: reader.result,
-      fileType: file.type,
-      fileName: file.name
-    }]
-  },
-  {
-    headers: {
-     'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
-  }
-);
-
-    } catch (err) {
-      console.error('❌ Failed to save file message', err);
-    }
+    reader.readAsDataURL(file);
   };
-  reader.readAsDataURL(file);
-};
 
+  const formatTime = (secs) => `${Math.floor(secs / 60)}:${(secs % 60).toString().padStart(2, '0')}`;
 
   return (
     <ChatContainer elevation={3}>
-      {showEmojiPicker && (
-        <EmojiPickerContainer ref={emojiPickerRef}>
-          <Picker
-            data={data}
-            onEmojiSelect={(emoji) => {
-              setMessage(prev => prev + emoji.native);
-              setShowEmojiPicker(false);
-            }}
-            onClickOutside={() => setShowEmojiPicker(false)}
-          />
-        </EmojiPickerContainer>
-      )}
-
-<ChatHeader>
-  <ProfileInfo>
-    <StatusBadge
-      overlap="circular"
-      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      variant="dot"
-      color={socketConnected ? 'success' : 'error'}
-    >
-     <Avatar sx={{ bgcolor: 'white', color: '#1976d2' }}>
-  {(role === 'lawyer'
-    ? (client?.name || messages[0]?.sender || 'C')
-    : (lawyer?.name || 'L')
-  ).charAt(0).toUpperCase()}
-</Avatar>
-
-    </StatusBadge>
-    <div>
-<Typography variant="subtitle1" fontWeight="bold">
-  {role === 'lawyer'
-    ? client?.name || messages[0]?.sender || 'Client'
-    : lawyer?.name || 'Lawyer'}
-</Typography>
-
-
-      <Typography variant="caption" display="flex" alignItems="center" gap={0.5}>
-        <WorkIcon fontSize="inherit" />
-        {role === 'lawyer' ? 'Client' : (lawyer?.specialization || 'Legal Professional')}
-      </Typography>
-    </div>
-  </ProfileInfo>
-
-  <SessionInfo>
-    <Tooltip title="Time remaining">
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-        <TimerIcon fontSize="small" />
-        <Typography variant="body2">{formatTime(remainingTime)}</Typography>
-      </div>
-    </Tooltip>
-
-    {sessionStatus === 'active' && (
-      <Button
-        variant="contained"
-        color="error"
-        size="small"
-        onClick={handleEndSession}
-        endIcon={<CloseIcon />}
-      >
-        End
-      </Button>
-    )}
-  </SessionInfo>
-</ChatHeader>
-
-
-
-      <MessagesContainer>
-        {sessionStatus === 'waiting' ? (
-          <EmptyState>
+      <ChatHeader>
+        <ProfileInfo>
+            <StatusBadge
+            overlap="circular"
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            variant="dot"
+            color={socketConnected ? 'success' : 'error'}
+            >
+            <Avatar sx={{ bgcolor: 'white', color: '#1976d2' }}>
+                {(role === 'lawyer' ? (client?.name || 'C') : (lawyer?.name || 'L')).charAt(0).toUpperCase()}
+            </Avatar>
+            </StatusBadge>
+            <div>
+                <Typography variant="subtitle1" fontWeight="bold">
+                    {role === 'lawyer' ? (client?.name || 'Client') : (lawyer?.name || 'Lawyer')}
+                </Typography>
+                <Typography variant="caption" display="flex" alignItems="center" gap={0.5}>
+                    <WorkIcon fontSize="inherit" />
+                    {role === 'lawyer' ? 'Client' : (lawyer?.specialization || 'Legal Professional')}
+                </Typography>
+            </div>
+        </ProfileInfo>
+        <SessionInfo>
+            <Tooltip title="Time remaining">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <TimerIcon fontSize="small" />
+                <Typography variant="body2">{formatTime(remainingTime)}</Typography>
+            </div>
+            </Tooltip>
+            {sessionStatus === 'active' && (
+            <Button
+                variant="contained"
+                color="error"
+                size="small"
+                onClick={handleEndSession}
+                endIcon={<CloseIcon />}
+            >
+                End
+            </Button>
+            )}
+        </SessionInfo>
+    </ChatHeader>
+    <MessagesContainer>
+    {sessionStatus === 'waiting' ? (
+        <EmptyState>
             <CircularProgress size={48} thickness={4} />
             <Typography variant="h6" mt={2}>Setting up your secure consultation...</Typography>
             <Typography variant="body2" mt={1}>
-              Please wait while we connect you with {role === 'lawyer' ? 'the client' : 'your attorney'}
+                Please wait while we connect you with {role === 'lawyer' ? 'the client' : 'your attorney'}
             </Typography>
-          </EmptyState>
-        ) : messages.length === 0 ? (
-          <EmptyState>
+        </EmptyState>
+        ) : messages.length === 0 && sessionStatus === 'active' ? (
+        <EmptyState>
             <Typography variant="h5" color="primary">⚖️ Secure Legal Consultation</Typography>
             <Typography variant="body1" mt={2}>
-              This is a private, encrypted conversation with your {role === 'lawyer' ? 'client' : 'attorney'}
+                This is a private, encrypted conversation.
             </Typography>
             <Typography variant="body2">
-              All communications are confidential and protected by attorney-client privilege
+                You can start the conversation now.
             </Typography>
-          </EmptyState>
+        </EmptyState>
         ) : (
-          messages
+        messages
             .filter((msg) => msg?.content)
-            .map((msg) => (
-              <MessageBubble
-                key={msg._id || msg.id || `${msg.senderId}-${msg.timestamp}`}
-                className={`${msg.senderId === currentUser.userId ? 'sent' : 'received'}`}
-              >
+            .map((msg, index) => (
+            <MessageBubble
+                key={msg.id || msg._id || `${msg.timestamp}-${index}`}
+                className={msg.senderId === currentUser.userId ? 'sent' : 'received'}
+            >
                 <MessageMeta>
-                  <span>
-                    {msg.senderRole === 'lawyer' ? (
-                      <WorkIcon fontSize="inherit" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
-                    ) : (
-                      <PersonIcon fontSize="inherit" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
-                    )}
-                    {msg.sender}
-                  </span>
-                  <span>
-                    {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
+                    <span>
+                        {msg.senderRole === 'lawyer' ? (
+                        <WorkIcon fontSize="inherit" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                        ) : (
+                        <PersonIcon fontSize="inherit" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                        )}
+                        {msg.sender}
+                    </span>
+                    <span>
+                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
                 </MessageMeta>
                 {msg.type === 'file' ? (
-                  msg.fileType.startsWith('image') ? (
+                    msg.fileType && msg.fileType.startsWith('image') ? (
                     <img 
-                      src={msg.content} 
-                      alt={msg.filename} 
-                      style={{ maxWidth: '100%', borderRadius: 8, marginTop: 4 }}
+                        src={msg.content} 
+                        alt={msg.filename} 
+                        style={{ maxWidth: '100%', borderRadius: 8, marginTop: 4 }}
                     />
-                  ) : (
+                    ) : (
                     <Button
-                      variant="outlined"
-                      size="small"
-                      href={msg.content}
-                      download={msg.filename}
-                      target="_blank"
-                      rel="noreferrer"
-                      sx={{ mt: 1 }}
+                        variant="outlined"
+                        size="small"
+                        href={msg.content}
+                        download={msg.filename}
+                        target="_blank"
+                        rel="noreferrer"
+                        sx={{ mt: 1, textTransform: 'none' }}
                     >
-                      📄 {msg.filename}
+                        📄 {msg.filename || 'Download File'}
                     </Button>
-                  )
+                    )
                 ) : (
-                  <div>{msg.content}</div>
+                    <div>{msg.content}</div>
                 )}
-              </MessageBubble>
+            </MessageBubble>
             ))
         )}
         <div ref={messagesEndRef} />
-      </MessagesContainer>
+    </MessagesContainer>
 
-      {sessionStatus === 'active' && (
+    {sessionStatus === 'active' && (
         <>
-          {otherTyping && (
+            {otherTyping && (
             <TypingIndicator>
-              <CircularProgress size={12} thickness={5} />
-              {role === 'lawyer' ? 'Client' : 'Lawyer'} is typing...
+                <CircularProgress size={12} thickness={5} />
+                <span>{role === 'lawyer' ? 'Client' : 'Lawyer'} is typing...</span>
             </TypingIndicator>
-          )}
-
-          {showEmojiPicker && (
-            <EmojiPickerContainer>
-              <Picker 
-                data={data} 
-                onEmojiSelect={(e) => setMessage((prev) => prev + e.native)}
-                onClickOutside={() => setShowEmojiPicker(false)}
-              />
-            </EmojiPickerContainer>
-          )}
-
-          <InputContainer onSubmit={handleSendMessage}>
+            )}
+            <InputContainer onSubmit={handleSendMessage}>
             <Tooltip title="Add emoji">
-              <IconButton onClick={() => setShowEmojiPicker((prev) => !prev)}>
+                <IconButton onClick={() => setShowEmojiPicker((prev) => !prev)}>
                 <EmojiIcon color="primary" />
-              </IconButton>
+                </IconButton>
             </Tooltip>
-
             <Tooltip title="Attach file">
-              <IconButton onClick={() => fileInputRef.current.click()}>
+                <IconButton onClick={() => fileInputRef.current.click()}>
                 <AttachFileIcon color="primary" />
-              </IconButton>
+                </IconButton>
             </Tooltip>
             <FileInput
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileUpload}
-              accept="image/*,application/pdf"
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                accept="image/*,application/pdf,.doc,.docx"
             />
-
             <TextField
-              fullWidth
-              variant="outlined"
-              size="small"
-              placeholder="Type your message..."
-              value={message}
-              onChange={handleTyping}
-              disabled={!socketConnected}
-              sx={{ mx: 1 }}
+                fullWidth
+                variant="outlined"
+                size="small"
+                placeholder="Type your message..."
+                value={message}
+                onChange={handleTyping}
+                disabled={!socketConnected}
+                sx={{ mx: 1 }}
+                autoComplete="off"
             />
-
             <Tooltip title="Send message">
-              <span>
+                <span>
                 <IconButton
-                  type="submit"
-                  color="primary"
-                  disabled={!message.trim() || !socketConnected}
+                    type="submit"
+                    color="primary"
+                    disabled={!message.trim() || !socketConnected}
                 >
-                  <SendIcon />
+                    <SendIcon />
                 </IconButton>
-              </span>
+                </span>
             </Tooltip>
-          </InputContainer>
+            </InputContainer>
         </>
-      )}
-
-      {sessionStatus === 'expired' && (
-        <EmptyState>
-          <Typography variant="h6" color="error">Session Ended</Typography>
-          <Typography variant="body1" mt={2}>
-            This consultation session has concluded
-          </Typography>
-          <Typography variant="body2">
-            {role === 'lawyer' ? 'You may close this window' : 'Thank you for your consultation'}
-          </Typography>
-        </EmptyState>
-      )}
+        )}
     </ChatContainer>
   );
 };
