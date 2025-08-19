@@ -20,10 +20,25 @@ const PaymentModal = ({ show, handleClose, serviceType, lawyer, onPaymentSuccess
   const currentUser = auth?.currentUser;
 
   const serviceDetails = {
-    call: { price: 10, icon: 'fa-phone', color: '#0d6efd', name: 'Phone Call' },
-    chat: { price: 5, icon: 'fa-comment-dots', color: '#198754', name: 'Chat' },
-    video: { price: 15, icon: 'fa-video', color: '#dc3545', name: 'Video Call' }
-  };
+  call: {
+    price: lawyer?.consultation_fees || 10,   // single fee applies to all
+    icon: 'fa-phone',
+    color: '#0d6efd',
+    name: 'Phone Call'
+  },
+  chat: {
+    price: lawyer?.consultation_fees || 10,
+    icon: 'fa-comment-dots',
+    color: '#198754',
+    name: 'Chat'
+  },
+  video: {
+    price: lawyer?.consultation_fees || 10,
+    icon: 'fa-video',
+    color: '#dc3545',
+    name: 'Video Call'
+  }
+};
 
   useEffect(() => {
     const perMinute = serviceDetails[serviceType]?.price || 10;
