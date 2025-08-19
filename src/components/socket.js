@@ -1,45 +1,26 @@
-// socket.js
+// socket.js (Corrected)
+
 import { io } from 'socket.io-client';
 
 const SERVER_URL = 'https://lawyerbackend-qrqa.onrender.com';
 
 let socket = null;
-let sessionAcked = false;
-let retryCount = 0;
-const maxRetries = 5;
-const retryDelay = 2000; // 2 seconds
-
-function sendSessionStart(_id, userType) {
-  if (sessionAcked || retryCount >= maxRetries) return;
-
-  console.log(`📤 Sending session-started (attempt ${retryCount + 1})`);
-  retryCount++;
-
-  socket.emit("session-started", { _id, userType }, (ack) => {
-    if (ack?.success) {
-      console.log("✅ Session acknowledged by server");
-      sessionAcked = true;
-    } else {
-      console.warn("⚠️ No acknowledgment, retrying...");
-      setTimeout(() => sendSessionStart(_id, userType), retryDelay);
-    }
-  });
-}
 
 export const initSocket = (token, _id, userType) => {
+  // Ensure required parameters are provided
   if (!token || !_id || !userType) {
-    console.error('❌ Missing socket init params');
+    console.error('❌ Missing parameters to initialize socket.');
     return null;
   }
 
-  if (socket && socket.connected) return socket;
+  // If socket is already connected, return the existing instance
+  if (socket && socket.connected) {
+    return socket;
+  }
 
-  sessionAcked = false;
-  retryCount = 0;
-
+  // Create a new socket instance
   socket = io(SERVER_URL, {
     auth: { token },
-    query: { _id, userType },
     path: '/socket.io',
     transports: ['websocket'],
     reconnectionAttempts: 5,
@@ -48,8 +29,15 @@ export const initSocket = (token, _id, userType) => {
   });
 
   socket.on('connect', () => {
-    console.log('✅ Socket connected:', socket.id);
-    sendSessionStart(_id, userType);
+    console.log('✅ Socket connected successfully with ID:', socket.id);
+    
+    // **CRITICAL CHANGE**: Identify the user to the server after connecting
+    // This allows the server to send notifications to this specific user.
+    if (userType === 'lawyer') {
+      socket.emit('join-lawyer', _id);
+    } else {
+      socket.emit('join-user', _id);
+    }
   });
 
   socket.on('disconnect', (reason) => {
@@ -60,10 +48,22 @@ export const initSocket = (token, _id, userType) => {
     console.error('❌ Socket connection error:', err.message);
   });
 
+  // You can add other global listeners here if needed
+  // For example:
+  // socket.on('booking-notification', (data) => {
+  //   console.log('Received new booking notification!', data);
+  //   // Show a toast or update UI
+  // });
+
   return socket;
 };
 
-export const getSocket = () => socket;
+export const getSocket = () => {
+  if (!socket) {
+    console.error("Socket has not been initialized. Please call initSocket first.");
+  }
+  return socket;
+};
 
 export const disconnectSocket = () => {
   if (socket) {
