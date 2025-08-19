@@ -20,25 +20,10 @@ const PaymentModal = ({ show, handleClose, serviceType, lawyer, onPaymentSuccess
   const currentUser = auth?.currentUser;
 
   const serviceDetails = {
-  call: {
-    price: lawyer?.consultation_fees || 10,   // single fee applies to all
-    icon: 'fa-phone',
-    color: '#0d6efd',
-    name: 'Phone Call'
-  },
-  chat: {
-    price: lawyer?.consultation_fees || 10,
-    icon: 'fa-comment-dots',
-    color: '#198754',
-    name: 'Chat'
-  },
-  video: {
-    price: lawyer?.consultation_fees || 10,
-    icon: 'fa-video',
-    color: '#dc3545',
-    name: 'Video Call'
-  }
-};
+    call: { price: lawyer?.consultation_fees || 10, icon: 'fa-phone', color: '#0d6efd', name: 'Phone Call' },
+    chat: { price: lawyer?.consultation_fees || 10, icon: 'fa-comment-dots', color: '#198754', name: 'Chat' },
+    video: { price: lawyer?.consultation_fees || 10, icon: 'fa-video', color: '#dc3545', name: 'Video Call' }
+  };
 
   useEffect(() => {
     const perMinute = serviceDetails[serviceType]?.price || 10;
@@ -78,24 +63,16 @@ const PaymentModal = ({ show, handleClose, serviceType, lawyer, onPaymentSuccess
     try {
       const verifyRes = await fetch('https://lawyerbackend-qrqa.onrender.com/lawapi/common/paymentverify', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({
-          razorpay_payment_id,
-          razorpay_order_id,
-          razorpay_signature,
-          bookingId
-        })
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ razorpay_payment_id, razorpay_order_id, razorpay_signature, bookingId })
       });
-
       const verifyData = await verifyRes.json();
       if (!verifyData.error) {
         const userData = JSON.parse(sessionStorage.getItem('userData'));
         const socket = initSocket(token, userData.userId, 'client');
 
         if (socket && userData) {
+          // ✅ Register listener first
           socket.on('session-started', (data) => {
             if (data.bookingId === bookingId) {
               console.log("✅ session-started confirmed by server:", data);
@@ -104,6 +81,7 @@ const PaymentModal = ({ show, handleClose, serviceType, lawyer, onPaymentSuccess
             }
           });
 
+          // Emit join events AFTER listener
           socket.emit('join-user', userData.userId);
           socket.emit('join-lawyer', verifyData.booking.lawyerId);
           socket.emit('join-booking', verifyData.booking._id);
@@ -124,15 +102,23 @@ const PaymentModal = ({ show, handleClose, serviceType, lawyer, onPaymentSuccess
             bookingId: verifyData.booking._id,
             mode: serviceType
           });
+
+          // 🔄 Optional fallback in case session-started was missed
+          socket.emit('check-session-status', { bookingId: verifyData.booking._id }, (resp) => {
+            if (resp?.active) {
+              setBookingAccepted(true);
+              setChatReady(true);
+            }
+          });
         }
 
         if (onPaymentSuccess) {
-onPaymentSuccess({
-  sessionToken: token,
-  durationMinutes: duration,
-  paymentId: razorpay_payment_id,
-  bookingId: bookingId,  // ✅ ADD THIS
-});
+          onPaymentSuccess({
+            sessionToken: token,
+            durationMinutes: duration,
+            paymentId: razorpay_payment_id,
+            bookingId
+          });
         }
       } else {
         alert(`Payment verification failed: ${verifyData.message}`);
@@ -150,19 +136,10 @@ onPaymentSuccess({
 
     try {
       const orderRes = await fetch('https://lawyerbackend-qrqa.onrender.com/lawapi/common/createorder', {
-  method: 'POST',
-  headers: { 
-    'Content-Type': 'application/json', 
-    'Authorization': `Bearer ${authToken}` 
-  },
-  body: JSON.stringify({ 
-    lawyerId: lawyer?.lawyerId, 
-    mode: serviceType, 
-    amount: total * 100   // ✅ send total in paise
-  })
-});
-
-
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ lawyerId: lawyer?.lawyerId, mode: serviceType, amount: total * 100 })
+      });
       const orderData = await orderRes.json();
       const razorpayOrderId = orderData?.order?.id;
       const bookingId = orderData?.booking?._id;
@@ -181,17 +158,8 @@ onPaymentSuccess({
         image: '/logo.png',
         order_id: razorpayOrderId,
         handler: (response) => handlePaymentSuccess({ ...response, bookingId }),
-        prefill: {
-          name: 'User',
-          email: 'user@example.com',
-          contact: '9999999999'
-        },
-        notes: {
-          lawyerId: lawyer?.lawyerId || 'Unknown',
-          service: serviceType,
-          duration,
-          lawyerName: lawyer?.name || 'Unknown'
-        },
+        prefill: { name: 'User', email: 'user@example.com', contact: '9999999999' },
+        notes: { lawyerId: lawyer?.lawyerId || 'Unknown', service: serviceType, duration, lawyerName: lawyer?.name || 'Unknown' },
         theme: { color: service.color }
       };
 
@@ -219,7 +187,6 @@ onPaymentSuccess({
 
   // ✅ Chat ready
   if (paymentSuccess && sessionToken && serviceType === 'chat' && bookingAccepted) {
-    console.log('🔍 Render Check:', { sessionToken, bookingId, lawyer, duration, currentUser });
     return (
       <Modal show={internalShow} onHide={handleHide} centered fullscreen>
         <Modal.Header closeButton style={{ background: '#1c1c84', color: 'white' }}>
@@ -228,30 +195,23 @@ onPaymentSuccess({
             Chat Session with {lawyer?.name}
           </Modal.Title>
         </Modal.Header>
-       <Modal.Body style={{ padding: 0, height: '100vh', overflow: 'hidden' }}>
-  {sessionToken && bookingId && lawyer && duration && currentUser?._id ? (
- 
- <ChatBox
-  sessionToken={sessionToken}
-  chatDuration={duration}
-  lawyer={lawyer}
-  bookingId={bookingId}
-  role="client"
-  currentUser={currentUser}
-    authToken={sessionStorage.getItem('token')} // ✅ This is the JWT
-
-/>
-
-
-  ) : (
-    <div className="d-flex justify-content-center align-items-center h-100">
-      <div className="text-muted">🔄 Setting up secure chat...</div>
-    </div>
-    
-  )}
-  
-</Modal.Body>
-
+        <Modal.Body style={{ padding: 0, height: '100vh', overflow: 'hidden' }}>
+          {sessionToken && bookingId && lawyer && duration && currentUser?._id ? (
+            <ChatBox
+              sessionToken={sessionToken}
+              chatDuration={duration}
+              lawyer={lawyer}
+              bookingId={bookingId}
+              role="client"
+              currentUser={currentUser}
+              authToken={sessionStorage.getItem('token')}
+            />
+          ) : (
+            <div className="d-flex justify-content-center align-items-center h-100">
+              <div className="text-muted">🔄 Setting up secure chat...</div>
+            </div>
+          )}
+        </Modal.Body>
       </Modal>
     );
   }
