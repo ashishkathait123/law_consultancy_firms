@@ -246,7 +246,7 @@ const resetForm = () => {
             {/* Numbers */}
             <div className="row">
               <div className="col-md-6 mb-3">
-                <label>Consultation Fees (₹)</label>
+                <label>Consultation Fees (₹/minute)</label>
                 <input type="number" name="consultation_fees" value={formData.consultation_fees} onChange={handleInputChange} className="form-control" />
               </div>
               <div className="col-md-6 mb-3">
