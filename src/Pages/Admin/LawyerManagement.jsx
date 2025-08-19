@@ -420,7 +420,7 @@ const LawyerManagement = () => {
               <Grid item xs={12} sm={6}>
                <TextField
   fullWidth
-  label="Consultation Fees"
+  label="Consultation Fees (₹/minute)"
   name="consultation_fees"
   type="number"
   value={editedLawyerData.consultation_fees || 0}
