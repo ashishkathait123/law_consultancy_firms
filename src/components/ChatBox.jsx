@@ -185,7 +185,7 @@ const ChatBox = ({
 
   useEffect(() => {
     const token = sessionToken || sessionStorage.getItem('token');
-    if (!token || !bookingId || !currentUser?.userId) {
+    if (!token || !bookingId || !currentUser?._id) {
       console.error("❌ ChatBox: Missing required props for connection.");
       return;
     }
@@ -233,13 +233,13 @@ const ChatBox = ({
     const handleNewMessage = (msg) => {
       // Only add the message if it's from the correct booking
       // AND it is NOT from the current user (to prevent echo).
-      if (msg.bookingId === bookingId && msg.senderId !== currentUser.userId) {
+      if (msg.bookingId === bookingId && msg.senderId !== currentUser._id) {
         setMessages((prev) => [...prev, msg]);
       }
     };
 
     const handleTypingIndicator = (data) => {
-      if (data.bookingId === bookingId && data.senderId !== currentUser.userId) {
+      if (data.bookingId === bookingId && data.senderId !== currentUser._id) {
         setOtherTyping(true);
         setTimeout(() => setOtherTyping(false), 2000);
       }
@@ -299,7 +299,7 @@ const ChatBox = ({
     const msgData = {
       id: uuidv4(), // Temporary ID for React key purposes
       sender: currentUser.name,
-      senderId: currentUser.userId,
+      senderId: currentUser._id,
       senderRole: role,
       content: message,
       type: 'text',
@@ -330,7 +330,7 @@ const ChatBox = ({
 
   const handleTyping = (e) => {
     setMessage(e.target.value);
-    socketRef.current?.emit('typing', { bookingId, senderId: currentUser.userId });
+    socketRef.current?.emit('typing', { bookingId, senderId: currentUser._id });
   };
   
   const handleEndSession = () => {
@@ -350,7 +350,7 @@ const ChatBox = ({
         const msg = {
             id: uuidv4(),
             sender: currentUser.name,
-            senderId: currentUser.userId,
+            senderId: currentUser._id,
             senderRole: role,
             content: reader.result,
             filename: file.name,
@@ -452,7 +452,7 @@ const ChatBox = ({
             .map((msg, index) => (
             <MessageBubble
                 key={msg.id || msg._id || `${msg.timestamp}-${index}`}
-                className={msg.senderId === currentUser.userId ? 'sent' : 'received'}
+                className={msg.senderId === currentUser._id ? 'sent' : 'received'}
             >
                 <MessageMeta>
                     <span>
