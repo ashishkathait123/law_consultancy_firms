@@ -9,25 +9,25 @@ let retryCount = 0;
 const maxRetries = 5;
 const retryDelay = 2000; // 2 seconds
 
-function sendSessionStart(userId, userType) {
+function sendSessionStart(_id, userType) {
   if (sessionAcked || retryCount >= maxRetries) return;
 
   console.log(`📤 Sending session-started (attempt ${retryCount + 1})`);
   retryCount++;
 
-  socket.emit("session-started", { userId, userType }, (ack) => {
+  socket.emit("session-started", { _id, userType }, (ack) => {
     if (ack?.success) {
       console.log("✅ Session acknowledged by server");
       sessionAcked = true;
     } else {
       console.warn("⚠️ No acknowledgment, retrying...");
-      setTimeout(() => sendSessionStart(userId, userType), retryDelay);
+      setTimeout(() => sendSessionStart(_id, userType), retryDelay);
     }
   });
 }
 
-export const initSocket = (token, userId, userType) => {
-  if (!token || !userId || !userType) {
+export const initSocket = (token, _id, userType) => {
+  if (!token || !_id || !userType) {
     console.error('❌ Missing socket init params');
     return null;
   }
@@ -39,7 +39,7 @@ export const initSocket = (token, userId, userType) => {
 
   socket = io(SERVER_URL, {
     auth: { token },
-    query: { userId, userType },
+    query: { _id, userType },
     path: '/socket.io',
     transports: ['websocket'],
     reconnectionAttempts: 5,
@@ -49,7 +49,7 @@ export const initSocket = (token, userId, userType) => {
 
   socket.on('connect', () => {
     console.log('✅ Socket connected:', socket.id);
-    sendSessionStart(userId, userType);
+    sendSessionStart(_id, userType);
   });
 
   socket.on('disconnect', (reason) => {
