@@ -150,13 +150,18 @@ onPaymentSuccess({
 
     try {
       const orderRes = await fetch('https://lawyerbackend-qrqa.onrender.com/lawapi/common/createorder', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({ lawyerId: lawyer?.lawyerId, mode: serviceType })
-      });
+  method: 'POST',
+  headers: { 
+    'Content-Type': 'application/json', 
+    'Authorization': `Bearer ${authToken}` 
+  },
+  body: JSON.stringify({ 
+    lawyerId: lawyer?.lawyerId, 
+    mode: serviceType, 
+    amount: total * 100   // ✅ send total in paise
+  })
+});
+
 
       const orderData = await orderRes.json();
       const razorpayOrderId = orderData?.order?.id;
