@@ -227,13 +227,13 @@ const LawyerDashboard = () => {
         console.log(`✅ Booking ${status} successfully:`, result);
 
         if (status === 'accepted') {
-          const userId = notificationData?.userId;
+          const _id = notificationData?._id;
           const duration = 15 * 60;
 
           await waitForSocketConnection();
-setChatSessionData({ bookingId, userId, duration, client: {
+setChatSessionData({ bookingId, _id, duration, client: {
   name: notificationData.name,
-  userId: notificationData.userId,
+  _id: notificationData._id,
 }});
           setStartChat(true);
         }
@@ -253,11 +253,11 @@ setChatSessionData({ bookingId, userId, duration, client: {
 
   setChatSessionData({
     bookingId: data.bookingId,
-    userId: data.userId,
+    _id: data._id,
     duration: 15 * 60,
     client: {
       name: data.name,
-      userId: data.userId,
+      _id: data._id,
     }
   });
 
@@ -293,14 +293,14 @@ setChatSessionData({ bookingId, userId, duration, client: {
   const userData = JSON.parse(sessionStorage.getItem('userData'));
   if (!authToken || !userData?.lawyerId) return;
 
-  const socket = initSocket(authToken, userData.lawyerId, 'lawyer');
+  const socket = initSocket(authToken, userData._id, 'lawyer');
 
   const handleBookingNotification = (data) => {
     console.log("📥 Booking notification received:", data);
     setNotificationData({
       bookingId: data.bookingId,
       name: data.userName || "Your Client", // fallback in case missing
-      userId: data.userId,
+      _id: data._id,
       mode: data.mode,
       timestamp: data.createdAt || new Date().toISOString(),
     });
@@ -360,7 +360,7 @@ setChatSessionData({ bookingId, userId, duration, client: {
   const sessionToken = sessionStorage.getItem("token");
   const normalizedUser = {
     ...lawyer,
-    userId: lawyer.lawyerId || lawyer._id,
+    _id: lawyer.lawyerId || lawyer._id,
     role: 'lawyer',
   };
 
@@ -368,7 +368,7 @@ setChatSessionData({ bookingId, userId, duration, client: {
     startChat &&
     socketReady &&
     sessionToken &&
-    normalizedUser.userId &&
+    normalizedUser._id &&
     chatSessionData;
 
   return (
@@ -385,7 +385,7 @@ setChatSessionData({ bookingId, userId, duration, client: {
   currentUser={normalizedUser}
   onReady={() => {
     const socket = getSocket();
-    const userId = chatSessionData.userId;
+    const _id = chatSessionData._id;
     const bookingId = chatSessionData.bookingId;
     const userData = JSON.parse(sessionStorage.getItem('userData'));
 
@@ -394,7 +394,7 @@ setChatSessionData({ bookingId, userId, duration, client: {
     socket.emit('booking-accepted', {
       bookingId,
       lawyerId: userData.lawyerId,
-      userId,
+      _id,
     });
 console.log("🔐 sessionToken (about to be passed to ChatBox):", sessionToken);
 
