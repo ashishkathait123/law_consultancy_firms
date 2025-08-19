@@ -299,7 +299,7 @@ setChatSessionData({ bookingId, userId, duration, client: {
     console.log("📥 Booking notification received:", data);
     setNotificationData({
       bookingId: data.bookingId,
-      name: data.userName || "Unknown Client", // fallback in case missing
+      name: data.userName || "Your Client", // fallback in case missing
       userId: data.userId,
       mode: data.mode,
       timestamp: data.createdAt || new Date().toISOString(),
