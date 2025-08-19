@@ -69,7 +69,7 @@ const PaymentModal = ({ show, handleClose, serviceType, lawyer, onPaymentSuccess
       const verifyData = await verifyRes.json();
       if (!verifyData.error) {
         const userData = JSON.parse(sessionStorage.getItem('userData'));
-        const socket = initSocket(token, userData.userId, 'client');
+        const socket = initSocket(token, userData._id, 'client');
 
         if (socket && userData) {
           // ✅ Register listener first
@@ -82,13 +82,13 @@ const PaymentModal = ({ show, handleClose, serviceType, lawyer, onPaymentSuccess
           });
 
           // Emit join events AFTER listener
-          socket.emit('join-user', userData.userId);
+          socket.emit('join-user', userData._id);
           socket.emit('join-lawyer', verifyData.booking.lawyerId);
           socket.emit('join-booking', verifyData.booking._id);
 
           socket.emit('new-booking-notification', {
             bookingId: verifyData.booking._id,
-            userId: userData.userId,
+            _id: userData._id,
             userName: userData.name || 'User',
             lawyerId: verifyData.booking.lawyerId,
             mode: serviceType,
@@ -97,7 +97,7 @@ const PaymentModal = ({ show, handleClose, serviceType, lawyer, onPaymentSuccess
           });
 
           socket.emit('user-started-chat', {
-            userId: userData.userId,
+            _id: userData._id,
             lawyerId: verifyData.booking.lawyerId,
             bookingId: verifyData.booking._id,
             mode: serviceType
@@ -196,21 +196,22 @@ const PaymentModal = ({ show, handleClose, serviceType, lawyer, onPaymentSuccess
           </Modal.Title>
         </Modal.Header>
         <Modal.Body style={{ padding: 0, height: '100vh', overflow: 'hidden' }}>
-          {sessionToken && bookingId && lawyer && duration && currentUser?._id ? (
-            <ChatBox
-              sessionToken={sessionToken}
-              chatDuration={duration}
-              lawyer={lawyer}
-              bookingId={bookingId}
-              role="client"
-              currentUser={currentUser}
-              authToken={sessionStorage.getItem('token')}
-            />
-          ) : (
-            <div className="d-flex justify-content-center align-items-center h-100">
-              <div className="text-muted">🔄 Setting up secure chat...</div>
-            </div>
-          )}
+         {sessionToken && bookingId && lawyer && duration && currentUser?._id ? (
+  <ChatBox
+    sessionToken={sessionToken}
+    chatDuration={duration}
+    lawyer={lawyer}
+    bookingId={bookingId}
+    role="client"
+    currentUser={currentUser}
+    authToken={sessionStorage.getItem('token')}
+  />
+) : (
+  <div className="d-flex justify-content-center align-items-center h-100">
+    <div className="text-muted">🔄 Setting up secure chat...</div>
+  </div>
+)}
+
         </Modal.Body>
       </Modal>
     );
