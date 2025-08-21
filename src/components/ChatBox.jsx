@@ -197,21 +197,21 @@ const ChatBox = ({
     }
     socketRef.current = socket;
 
-    const fetchChatHistory = async () => {
-      try {
-        const res = await axios.get(
-          `https://lawyerbackend-qrqa.onrender.com/lawapi/common/gethistory/${bookingId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (!res.data.error && Array.isArray(res.data.data)) {
-          const sortedMessages = res.data.data.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-          setMessages(sortedMessages);
-        }
-      } catch (err) {
-        console.error("❌ Error fetching chat history", err.response?.data || err.message);
-      }
-    };
-    fetchChatHistory();
+    // const fetchChatHistory = async () => {
+    //   try {
+    //     const res = await axios.get(
+    //       `https://lawyerbackend-qrqa.onrender.com/lawapi/common/gethistory/${bookingId}`,
+    //       { headers: { Authorization: `Bearer ${token}` } }
+    //     );
+    //     if (!res.data.error && Array.isArray(res.data.data)) {
+    //       const sortedMessages = res.data.data.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    //       setMessages(sortedMessages);
+    //     }
+    //   } catch (err) {
+    //     console.error("Error fetching chat history", err.response?.data || err.message);
+    //   }
+    // };
+    // fetchChatHistory();
 
     const handleConnect = () => {
       setSocketConnected(true);
@@ -270,6 +270,29 @@ const ChatBox = ({
     };
 
   }, [bookingId, currentUser, onReady, sessionToken]);
+
+
+useEffect(() => {
+  if (!socket) return;
+
+  // existing listeners
+  socket.on("message", (msg) => {
+    setMessages((prev) => [...prev, msg]);
+  });
+
+  // ✅ ADD this
+  socket.on("session-started", ({ bookingId, duration }) => {
+    console.log("Session started:", bookingId);
+    setSessionStatus("active");
+    setRemainingTime(duration * 60); // if duration is in minutes
+  });
+
+  return () => {
+    socket.off("message");
+    socket.off("session-started"); // ✅ clean up
+  };
+}, [socket]);
+
 
   useEffect(() => {
     if (sessionStatus !== 'active' || remainingTime <= 0) return;
