@@ -184,92 +184,93 @@ const ChatBox = ({
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    const token = sessionToken || sessionStorage.getItem('token');
-    if (!token || !bookingId || !currentUser?._id ) {
-      console.error("❌ ChatBox: Missing required props for connection.");
-      return;
+  const token = sessionToken || sessionStorage.getItem('token');
+  if (!token || !bookingId || !currentUser?._id) {
+    console.warn("⏳ ChatBox waiting for props...");
+    return;
+  }
+
+  const socket = getSocket();
+  if (!socket) {
+    console.error("❌ Socket has not been initialized. Cannot establish chat.");
+    return;
+  }
+  socketRef.current = socket;
+
+  // --- Fetch history ---
+  const fetchChatHistory = async () => {
+    try {
+      const res = await axios.get(
+        `https://lawyerbackend-qrqa.onrender.com/lawapi/common/gethistory/${bookingId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!res.data.error && Array.isArray(res.data.data)) {
+        const sortedMessages = res.data.data.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        setMessages(sortedMessages);
+      }
+    } catch (err) {
+      console.error("❌ Error fetching chat history", err.response?.data || err.message);
     }
+  };
+  fetchChatHistory();
 
-    const socket = getSocket();
-    if (!socket) {
-      console.error("❌ Socket has not been initialized. Cannot establish chat.");
-      return;
+  // --- Event handlers ---
+  const handleConnect = () => {
+    setSocketConnected(true);
+    socket.emit('join-booking', bookingId);
+    console.log("✅ Joined booking room", bookingId);
+    if (onReady) onReady();
+  };
+
+  const handleDisconnect = () => setSocketConnected(false);
+
+  const handleSessionStarted = (data) => {
+    if (data.bookingId === bookingId) {
+      setSessionStatus('active');
+      setRemainingTime(data.duration || chatDuration * 60);
+      toast.success("✅ Session started!");
     }
-    socketRef.current = socket;
+  };
 
-    const fetchChatHistory = async () => {
-      try {
-        const res = await axios.get(
-          `https://lawyerbackend-qrqa.onrender.com/lawapi/common/gethistory/${bookingId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (!res.data.error && Array.isArray(res.data.data)) {
-          const sortedMessages = res.data.data.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-          setMessages(sortedMessages);
-        }
-      } catch (err) {
-        console.error("❌ Error fetching chat history", err.response?.data || err.message);
-      }
-    };
-    fetchChatHistory();
-
-    const handleConnect = () => {
-      setSocketConnected(true);
-      socket.emit('join-booking', bookingId);
-      if (onReady) onReady();
-    };
-
-    const handleDisconnect = () => setSocketConnected(false);
-
-    const handleSessionStarted = (data) => {
-      if (data.bookingId === bookingId) {
-        setSessionStatus('active');
-        setRemainingTime(data.duration || chatDuration * 60);
-        toast.success("✅ Session started!");
-      }
-    };
-
-    // ✅ FIX: THIS IS THE CORE CHANGE TO PREVENT DUPLICATES
-    const handleNewMessage = (msg) => {
-      // Only add the message if it's from the correct booking
-      // AND it is NOT from the current user (to prevent echo).
-      if (msg.bookingId === bookingId && msg.senderId !== currentUser._id ) {
-        setMessages((prev) => [...prev, msg]);
-      }
-    };
-
-    const handleTypingIndicator = (data) => {
-      if (data.bookingId === bookingId && data.senderId !== currentUser._id ) {
-        setOtherTyping(true);
-        setTimeout(() => setOtherTyping(false), 2000);
-      }
-    };
-    
-    const handleSessionEnded = () => {
-        setSessionStatus('expired');
-        toast.info("⚠️ Session has ended.");
-    };
-
-    if (socket.connected) {
-      handleConnect();
+  const handleNewMessage = (msg) => {
+    if (msg.bookingId === bookingId && msg.senderId !== currentUser._id) {
+      setMessages((prev) => [...prev, msg]);
     }
-    socket.on('connect', handleConnect);
-    socket.on('disconnect', handleDisconnect);
-    socket.on('session-started', handleSessionStarted);
-    socket.on('new-message', handleNewMessage);
-    socket.on('session-ended', handleSessionEnded);
-    socket.on('typing', handleTypingIndicator);
+  };
 
-    return () => {
-      socket.off('connect', handleConnect);
-      socket.off('disconnect', handleDisconnect);
-      socket.off('session-started', handleSessionStarted);
-      socket.off('new-message', handleNewMessage);
-      socket.off('session-ended', handleSessionEnded);
-      socket.off('typing', handleTypingIndicator);
-    };
+  const handleTypingIndicator = (data) => {
+    if (data.bookingId === bookingId && data.senderId !== currentUser._id) {
+      setOtherTyping(true);
+      setTimeout(() => setOtherTyping(false), 2000);
+    }
+  };
 
-  }, [bookingId, currentUser, onReady, sessionToken]);
+  const handleSessionEnded = () => {
+    setSessionStatus('expired');
+    toast.info("⚠️ Session has ended.");
+  };
+
+  // --- Attach listeners ---
+  if (socket.connected) {
+    handleConnect();
+  }
+  socket.on('connect', handleConnect);
+  socket.on('disconnect', handleDisconnect);
+  socket.on('session-started', handleSessionStarted);
+  socket.on('new-message', handleNewMessage);
+  socket.on('session-ended', handleSessionEnded);
+  socket.on('typing', handleTypingIndicator);
+
+  // --- Cleanup ---
+  return () => {
+    socket.off('connect', handleConnect);
+    socket.off('disconnect', handleDisconnect);
+    socket.off('session-started', handleSessionStarted);
+    socket.off('new-message', handleNewMessage);
+    socket.off('session-ended', handleSessionEnded);
+    socket.off('typing', handleTypingIndicator);
+  };
+}, [bookingId, currentUser?._id, sessionToken]); // 👈 add deps
 
   useEffect(() => {
     if (sessionStatus !== 'active' || remainingTime <= 0) return;
