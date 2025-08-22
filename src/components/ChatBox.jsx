@@ -185,7 +185,7 @@ const ChatBox = ({
 
   useEffect(() => {
     const token = sessionToken || sessionStorage.getItem('token');
-    if (!token || !bookingId || !currentUser?._id) {
+    if (!token || !bookingId || !currentUser?._id ) {
       console.error("❌ ChatBox: Missing required props for connection.");
       return;
     }
@@ -197,21 +197,21 @@ const ChatBox = ({
     }
     socketRef.current = socket;
 
-    // const fetchChatHistory = async () => {
-    //   try {
-    //     const res = await axios.get(
-    //       `https://lawyerbackend-qrqa.onrender.com/lawapi/common/gethistory/${bookingId}`,
-    //       { headers: { Authorization: `Bearer ${token}` } }
-    //     );
-    //     if (!res.data.error && Array.isArray(res.data.data)) {
-    //       const sortedMessages = res.data.data.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-    //       setMessages(sortedMessages);
-    //     }
-    //   } catch (err) {
-    //     console.error("Error fetching chat history", err.response?.data || err.message);
-    //   }
-    // };
-    // fetchChatHistory();
+    const fetchChatHistory = async () => {
+      try {
+        const res = await axios.get(
+          `https://lawyerbackend-qrqa.onrender.com/lawapi/common/gethistory/${bookingId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (!res.data.error && Array.isArray(res.data.data)) {
+          const sortedMessages = res.data.data.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+          setMessages(sortedMessages);
+        }
+      } catch (err) {
+        console.error("❌ Error fetching chat history", err.response?.data || err.message);
+      }
+    };
+    fetchChatHistory();
 
     const handleConnect = () => {
       setSocketConnected(true);
@@ -233,13 +233,13 @@ const ChatBox = ({
     const handleNewMessage = (msg) => {
       // Only add the message if it's from the correct booking
       // AND it is NOT from the current user (to prevent echo).
-      if (msg.bookingId === bookingId && msg.senderId !== currentUser._id) {
+      if (msg.bookingId === bookingId && msg.senderId !== currentUser._id ) {
         setMessages((prev) => [...prev, msg]);
       }
     };
 
     const handleTypingIndicator = (data) => {
-      if (data.bookingId === bookingId && data.senderId !== currentUser._id) {
+      if (data.bookingId === bookingId && data.senderId !== currentUser._id ) {
         setOtherTyping(true);
         setTimeout(() => setOtherTyping(false), 2000);
       }
@@ -271,29 +271,6 @@ const ChatBox = ({
 
   }, [bookingId, currentUser, onReady, sessionToken]);
 
-
-useEffect(() => {
-  if (!socket) return;
-
-  // existing listeners
-  socket.on("message", (msg) => {
-    setMessages((prev) => [...prev, msg]);
-  });
-
-  // ✅ ADD this
-  socket.on("session-started", ({ bookingId, duration }) => {
-    console.log("Session started:", bookingId);
-    setSessionStatus("active");
-    setRemainingTime(duration * 60); // if duration is in minutes
-  });
-
-  return () => {
-    socket.off("message");
-    socket.off("session-started"); // ✅ clean up
-  };
-}, [socket]);
-
-
   useEffect(() => {
     if (sessionStatus !== 'active' || remainingTime <= 0) return;
     const interval = setInterval(() => {
@@ -322,7 +299,7 @@ useEffect(() => {
     const msgData = {
       id: uuidv4(), // Temporary ID for React key purposes
       sender: currentUser.name,
-      senderId: currentUser._id,
+      senderId: currentUser._id ,
       senderRole: role,
       content: message,
       type: 'text',
@@ -353,7 +330,7 @@ useEffect(() => {
 
   const handleTyping = (e) => {
     setMessage(e.target.value);
-    socketRef.current?.emit('typing', { bookingId, senderId: currentUser._id });
+    socketRef.current?.emit('typing', { bookingId, senderId: currentUser._id  });
   };
   
   const handleEndSession = () => {
@@ -373,7 +350,7 @@ useEffect(() => {
         const msg = {
             id: uuidv4(),
             sender: currentUser.name,
-            senderId: currentUser._id,
+            senderId: currentUser._id ,
             senderRole: role,
             content: reader.result,
             filename: file.name,
@@ -475,7 +452,7 @@ useEffect(() => {
             .map((msg, index) => (
             <MessageBubble
                 key={msg.id || msg._id || `${msg.timestamp}-${index}`}
-                className={msg.senderId === currentUser._id ? 'sent' : 'received'}
+                className={msg.senderId === currentUser._id  ? 'sent' : 'received'}
             >
                 <MessageMeta>
                     <span>
